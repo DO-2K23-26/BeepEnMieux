@@ -11,10 +11,20 @@ services:
   server:
     build:
       context: .
+    container_name: beep_backend_nestjs
+    restart: always
     environment:
       NODE_ENV: production
     ports:
       - 9644:9644
+  mongodb:
+    image: mongo
+    container_name: beep_db_mongo
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: beep
+    ports:
+      - "27017:27017"
 
 # The commented out section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to
