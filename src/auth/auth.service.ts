@@ -2,6 +2,7 @@ import { Injectable, NotAcceptableException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaClientRustPanicError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class AuthService {
@@ -24,4 +25,12 @@ export class AuthService {
             access_token: this.jwtService.sign(payload),
         };
     }
+
+    async infoUser(jwtToken: string): Promise<any> {
+        const decodedToken = this.jwtService.decode(jwtToken);
+        console.log(decodedToken, jwtToken);
+        
+        return await this.usersService.getUser({ username: decodedToken.username });
+    }
+
 }
