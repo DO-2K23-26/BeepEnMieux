@@ -23,7 +23,10 @@ export class MessageService {
     return this.prisma.message.findUnique({ where: { id } });
   }
 
-  async update(id: string, updateMessageDto: UpdateMessageDto): Promise<Message | null> {
+  async update(
+    id: string,
+    updateMessageDto: UpdateMessageDto,
+  ): Promise<Message | null> {
     return this.prisma.message.update({
       where: { id },
       data: updateMessageDto,
