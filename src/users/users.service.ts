@@ -10,11 +10,12 @@ import { User, Room } from '../shared/interfaces/chat.interface';
 @Injectable()
 export class UsersService {
   private rooms: Room[] = [];
-
+  
+  // constructor(private readonly prisma: PrismaService) {} TODO: uncomment this line
   constructor(
     @InjectModel('user') private readonly userModel: Model<UserDocument>,
-  ) {}
-
+    ) {}
+    
   async createUser(username: string, password: string): Promise<UserModel> {
     return this.userModel.create({
       username,
@@ -92,8 +93,12 @@ export class UsersService {
   async getRooms(): Promise<Room[]> {
     return this.rooms;
   }
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    const { id, email, mdp, pseudo, nom, prenom, createdAt } = createUserDto;
+    return this.prisma.user.create({
+      data: { id, email, mdp, pseudo, nom, prenom, createdAt },
+    });
   }
 
   findAll() {
