@@ -1,47 +1,64 @@
-import { Logger } from "@nestjs/common";
 import {
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  OnGatewayInit,
+  MessageBody,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-} from "@nestjs/websockets";
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+} from '@nestjs/websockets'
+import { Logger } from '@nestjs/common'
+import {
+  ServerToClientEvents,
+  ClientToServerEvents,
+  Message,
+  User,
+} from '../shared/interfaces/chat.interface'
+import { Server, Socket } from 'socket.io'
+import { UserService } from '../user/user.service'
 
-import { Server } from "socket.io";
+@WebSocketGateway({
+  cors: {
+    origin: '*',
+  },
+})
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  constructor(private userService: UserService) {}
 
-@WebSocketGateway(8001, {cors: '*'})
-export class ChatGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
-  private readonly logger = new Logger(ChatGateway.name);
+  @WebSocketServer() server: Server = new Server<ServerToClientEvents, ClientToServerEvents>()
 
-  @WebSocketServer() io: Server;
+  private logger = new Logger('ChatGateway')
 
-  afterInit() {
-    this.logger.log("Initialized");
+  @SubscribeMessage('chat')
+  async handleChatEvent(
+    @MessageBody()
+    payload: Message
+  ): Promise<Message> {
+    this.logger.log(payload)
+    this.server.to(payload.roomName).emit('chat', payload) // broadcast messages
+    return payload
   }
 
-  handleConnection(client: any, ...args: any[]) {
-    const { sockets } = this.io.sockets;
-
-    this.logger.log(`Client id: ${client.id} connected`);
-    this.logger.debug(`Number of connected clients: ${sockets.size}`);
+  @SubscribeMessage('join_room')
+  async handleSetClientDataEvent(
+    @MessageBody()
+    payload: {
+      roomName: string
+      user: User
+    }
+  ) {
+    if (payload.user.socketId) {
+      this.logger.log(`${payload.user.socketId} is joining ${payload.roomName}`)
+      await this.server.in(payload.user.socketId).socketsJoin(payload.roomName)
+      await this.userService.addUserToRoom(payload.roomName, payload.user)
+    }
   }
 
-  handleDisconnect(client: any) {
-    this.logger.log(`Cliend id:${client.id} disconnected`);
+  async handleConnection(socket: Socket): Promise<void> {
+    this.logger.log(`Socket connected: ${socket.id}`)
   }
 
-  @SubscribeMessage("ping")
-  handleMessage(client: any, data: any) {
-    this.logger.log(`Message received from client id: ${client.id}`);
-    this.logger.debug(`Payload: ${data}`);
-    return {
-      event: "pong",
-      data,
-    };
+  async handleDisconnect(socket: Socket): Promise<void> {
+    await this.userService.removeUserFromAllRooms(socket.id)
+    this.logger.log(`Socket disconnected: ${socket.id}`)
   }
-
 }
-

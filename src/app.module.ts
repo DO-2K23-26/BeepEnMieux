@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ChatGateway } from './chat/chat.gateway';
+import { UserModule } from './user/user.module';
 
 @Module({
   // TODO Change mongo log string to env variable
