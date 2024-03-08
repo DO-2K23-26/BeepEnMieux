@@ -30,7 +30,7 @@ model Message {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   contenu   Json
   groupeId  String   @db.ObjectId
-  groupe    Groupe   @relation(fields: [groupeId], references: [id])
+  groupes    Groupe   @relation(fields: [groupeId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
