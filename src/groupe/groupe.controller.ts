@@ -27,16 +27,16 @@ export class GroupeController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.groupeService.findOne(+id);
+    return this.groupeService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateGroupeDto: UpdateGroupeDto) {
-    return this.groupeService.update(+id, updateGroupeDto);
+    return this.groupeService.update(id, updateGroupeDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.groupeService.remove(+id);
+    return this.groupeService.remove(id);
   }
 }

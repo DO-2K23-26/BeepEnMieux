@@ -1,5 +1,3 @@
-import { Groupe } from '@prisma/client';
-
 // create-user.dto.ts
 export class CreateUserDto {
   id: string;
