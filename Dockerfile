@@ -57,6 +57,9 @@ USER node
 # Copy package.json so that package manager commands can be used.
 COPY package.json .
 
+# Push prisma schema to the mongodb
+RUN npx prisma db push
+
 # Copy the production dependencies from the deps stage and also
 # the built application from the build stage into the image.
 COPY --from=deps /usr/src/app/node_modules ./node_modules
