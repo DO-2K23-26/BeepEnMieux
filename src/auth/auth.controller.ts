@@ -1,4 +1,4 @@
-import { Controller, Request, Post, UseGuards, Body, Get, Headers } from '@nestjs/common';
+import { Controller, Request, Post, UseGuards, Body, Get, Headers, NotAcceptableException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -15,7 +15,7 @@ export class AuthController {
     @Get('auth/@me')
     async getProfile(@Headers('authorization') authorization: string): Promise<any> {
         if (!authorization) {
-        throw new Error('Token d\'autorisation manquant');
+            throw new NotAcceptableException('could not find the jwt token');
         }
 
         // Extrait le token du body "authorization" (format: "Bearer <token>")

@@ -14,7 +14,7 @@ import {
   User,
 } from '../shared/interfaces/chat.interface'
 import { Server, Socket } from 'socket.io'
-import { UserService } from '../user/user.service'
+import { UsersService } from '../users/users.service'
 
 @WebSocketGateway({
   cors: {
@@ -22,7 +22,7 @@ import { UserService } from '../user/user.service'
   },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(private userService: UserService) {}
+  constructor(private userService: UsersService) { }
 
   @WebSocketServer() server: Server = new Server<ServerToClientEvents, ClientToServerEvents>()
 
@@ -48,8 +48,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     if (payload.user.socketId) {
       this.logger.log(`${payload.user.socketId} is joining ${payload.roomName}`)
-      await this.server.in(payload.user.socketId).socketsJoin(payload.roomName)
-      await this.userService.addUserToRoom(payload.roomName, payload.user)
+      this.server.in(payload.user.socketId).socketsJoin(payload.roomName)
+      this.userService.addUserToRoom(payload.roomName, payload.user)
     }
   }
 

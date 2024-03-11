@@ -4,8 +4,7 @@ import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { ChatGateway } from './chat/chat.gateway';
-import { UserModule } from './user/user.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   // TODO Change mongo log string to env variable
@@ -13,8 +12,9 @@ import { UserModule } from './user/user.module';
     MongooseModule.forRoot('mongodb://localhost:27017/authentication'),
     UsersModule,
     AuthModule,
+    ChatModule,
   ],
   controllers: [AppController],
-  providers: [AppService, ChatGateway],
+  providers: [AppService],
 })
 export class AppModule {}
