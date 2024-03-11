@@ -7,9 +7,8 @@ import { AuthModule } from './auth/auth.module';
 import { ChatGateway } from './chat/chat.gateway';
 
 @Module({
-  // TODO Change mongo log string to env variable
   imports: [
-    MongooseModule.forRoot('mongodb://localhost:27017/authentication'),
+    MongooseModule.forRoot(process.env.DATABASE_URL),
     UsersModule,
     AuthModule,
   ],
