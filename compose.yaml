@@ -15,9 +15,11 @@ services:
     restart: always
     environment:
       NODE_ENV: production
-      MONGO_URL: mongodb://localhost:27017/beep
+      MONGO_URL: mongodb://mongodb:27017/beep
     ports:
       - 9644:9644
+    depends_on:
+      - mongodb
   mongodb:
     image: mongo
     container_name: beep_db_mongo
