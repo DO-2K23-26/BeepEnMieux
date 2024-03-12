@@ -17,6 +17,12 @@ export class UsersService {
     });
   }
 
+  async findOneByPseudo(pseudo: string): Promise<User> {
+    return this.prisma.user.findUnique({
+      where: { pseudo },
+    });
+  }
+
   async addRoom(roomName: string, host: User): Promise<void> {
     const room = await this.getRoomByName(roomName);
     if (room === -1) {

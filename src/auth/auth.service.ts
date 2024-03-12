@@ -9,10 +9,10 @@ export class AuthService {
     private readonly usersService: UsersService,
     private jwtService: JwtService,
   ) {}
-  async validateUser(username: string, password: string): Promise<any> {
-    const user = await this.usersService.getUser({ username });
+  async validateUser(pseudo: string, password: string): Promise<any> {
+    const user = await this.usersService.findOneByPseudo(pseudo);
     if (!user) return null;
-    const passwordValid = await bcrypt.compare(password, user.password);
+    const passwordValid = await bcrypt.compare(password, user.mdp);
     if (!user) {
       throw new NotAcceptableException('could not find the user');
     }
@@ -22,7 +22,7 @@ export class AuthService {
     return null;
   }
   async login(user: any) {
-    const payload = { username: user.username, sub: user._id };
+    const payload = { pseudo: user.pseudo, sub: user._id };
     return {
       access_token: this.jwtService.sign(payload),
     };
@@ -32,6 +32,6 @@ export class AuthService {
     const decodedToken = this.jwtService.decode(jwtToken);
     console.log(decodedToken, jwtToken);
 
-    return await this.usersService.getUser({ username: decodedToken.username });
+    return await this.usersService.findOneByPseudo(decodedToken.pseudo);
   }
 }
