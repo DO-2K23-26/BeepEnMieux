@@ -59,7 +59,7 @@ export class UsersController {
 
   @Get(':id')
   findOneById(@Param('id') id: string) {
-    return this.usersService.findOne(Number(id));
+    return this.usersService.findOneById(Number(id));
   }
 
   @Patch(':id')
