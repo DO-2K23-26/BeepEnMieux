@@ -4,7 +4,7 @@ import { Message, User } from '@prisma/client';
 
 export class UpdateGroupeDto extends PartialType(CreateGroupeDto) {
   userIds?: string[];
-  users?: User[];
+  users?: never;
   nom?: string;
   messages?: Message[];
 }

@@ -9,6 +9,6 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   nom?: string;
   prenom?: string;
   groupeIds?: string[] | null; // Ajoutez cela si vous prévoyez de mettre à jour les groupes associés
-  groupes?: Groupe[] | null;
+  groupes?: never;
   updatedAt?: Date; // Vous pouvez ajuster le type en fonction de votre configuration
 }

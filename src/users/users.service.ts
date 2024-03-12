@@ -1,30 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { UserModel, UserDocument } from './users.model';
-import { randomBytes } from 'crypto';
-import { User, Room } from '../shared/interfaces/chat.interface';
+import { User } from './users.model';
+import { Room } from '../shared/interfaces/chat.interface';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class UsersService {
   private rooms: Room[] = [];
   
-  // constructor(private readonly prisma: PrismaService) {} TODO: uncomment this line
-  constructor(
-    @InjectModel('user') private readonly userModel: Model<UserDocument>,
-    ) {}
-    
-  async createUser(username: string, password: string): Promise<UserModel> {
-    return this.userModel.create({
-      username,
-      password,
-    });
-  }
-  async getUser(query: object): Promise<UserModel> {
-    return this.userModel.findOne(query);
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async addRoom(roomName: string, host: User): Promise<void> {
     const room = await this.getRoomByName(roomName);
@@ -55,7 +40,7 @@ export class UsersService {
     if (roomIndex !== -1) {
       this.rooms[roomIndex].users.push(user);
       const host = await this.getRoomHost(roomName);
-      if (host.userId === user.userId) {
+      if (host.id === user.id) {
         this.rooms[roomIndex].host.socketId = user.socketId;
       }
     } else {
@@ -102,21 +87,19 @@ export class UsersService {
   }
 
   findAll() {
-    return `This action returns all users`;
+    return this.prisma.user.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User | null> {
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<User | null> {
     return this.prisma.user.update({
-      where: { id },
+      where: { id: id.toString() },
       data: updateUserDto,
     });
   }
 
   remove(id: number) {
-    return `This action removes a #${id} user`;
+    return this.prisma.user.delete({
+      where: { id: id.toString() },
+    });
   }
 }
