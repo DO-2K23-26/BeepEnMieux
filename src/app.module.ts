@@ -11,19 +11,11 @@ import { GroupeController } from './groupe/groupe.controller';
 import { UsersService } from './users/users.service';
 import { MessageService } from './message/message.service';
 import { GroupeService } from './groupe/groupe.service';
-import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
 
 @Module({
-  imports: [
-    UsersModule,
-    MongooseModule.forRoot(process.env.MONGO_URL),
-    GroupeModule,
-    MessageModule,
-    AuthModule,
-    ChatModule,
-  ],
+  imports: [UsersModule, GroupeModule, MessageModule, AuthModule, ChatModule],
   controllers: [
     AppController,
     UsersController,
