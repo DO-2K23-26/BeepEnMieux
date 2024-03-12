@@ -11,7 +11,7 @@ export class UsersService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOne(id: number): Promise<User> {
+  async findOneById(id: number): Promise<User> {
     return this.prisma.user.findUnique({
       where: { id: id.toString() },
     });
@@ -86,9 +86,9 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const { id, email, mdp, pseudo, nom, prenom, createdAt } = createUserDto;
+    const { email, mdp, pseudo, nom, prenom } = createUserDto;
     return this.prisma.user.create({
-      data: { id, email, mdp, pseudo, nom, prenom, createdAt },
+      data: { email, mdp, pseudo, nom, prenom },
     });
   }
 

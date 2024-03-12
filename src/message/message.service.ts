@@ -9,9 +9,9 @@ export class MessageService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createMessageDto: CreateMessageDto): Promise<Message> {
-    const { id, contenu, groupeId, groupes, createdAt } = createMessageDto;
+    const { contenu, groupeId, groupe } = createMessageDto;
     return this.prisma.message.create({
-      data: { id, contenu, groupeId, groupes, createdAt },
+      data: { contenu, groupeId, groupes: { connect: { id: groupeId } } },
     });
   }
 

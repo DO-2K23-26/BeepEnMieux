@@ -22,10 +22,16 @@ export class UsersController {
   async createUser(
     @Body('password') password: string,
     @Body('username') username: string,
+    @Body('email') email: string,
   ): Promise<User> {
     const saltOrRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltOrRounds);
-    const result = await this.usersService.create(username, hashedPassword);
+    const user: CreateUserDto = {
+      email: email,
+      pseudo: username,
+      mdp: hashedPassword,
+    };
+    const result = await this.usersService.create(user);
     return result;
   }
 
@@ -52,7 +58,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOneById(@Param('id') id: string) {
     return this.usersService.findOne(Number(id));
   }
 
