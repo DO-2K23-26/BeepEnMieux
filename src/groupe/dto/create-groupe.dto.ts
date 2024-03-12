@@ -1,9 +1,10 @@
-import { Message } from '@prisma/client';
+import { Message, User } from '@prisma/client';
 
 export class CreateGroupeDto {
   id: string;
   userIds: string[];
-  users: never;
+  users: User[];
   nom: string;
+  messageIds?: string[];
   messages?: Message[];
 }
