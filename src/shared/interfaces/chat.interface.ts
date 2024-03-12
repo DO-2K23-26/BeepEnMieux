@@ -1,23 +1,23 @@
 import { User } from '@prisma/client';
 
 export interface Room {
-  name: string
-  host: User
-  users: User[]
+  name: string;
+  host: User;
+  users: User[];
 }
 
 export interface Message {
-  user: User
-  timeSent: string
-  message: string
-  roomName: string
+  user: User;
+  timeSent: string;
+  message: string;
+  roomName: string;
 }
 
 export interface ServerToClientEvents {
-  chat: (e: Message) => void
+  chat: (e: Message) => void;
 }
 
 export interface ClientToServerEvents {
-  chat: (e: Message) => void
-  join_room: (e: { user: User; roomName: string }) => void
+  chat: (e: Message) => void;
+  join_room: (e: { user: User; roomName: string }) => void;
 }
