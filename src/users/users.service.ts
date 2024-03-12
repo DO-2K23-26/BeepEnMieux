@@ -8,8 +8,14 @@ import { PrismaService } from 'src/prisma.service';
 @Injectable()
 export class UsersService {
   private rooms: Room[] = [];
-  
+
   constructor(private readonly prisma: PrismaService) {}
+
+  async findOne(id: number): Promise<User> {
+    return this.prisma.user.findUnique({
+      where: { id: id.toString() },
+    });
+  }
 
   async addRoom(roomName: string, host: User): Promise<void> {
     const room = await this.getRoomByName(roomName);
