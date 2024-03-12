@@ -1,4 +1,4 @@
-import { User } from '../../users/users.model';
+import { User } from '@prisma/client';
 
 export interface Room {
   name: string

@@ -15,11 +15,7 @@ export class GroupeService {
         id,
         userIds,
         users: {
-          connect: users.map((user) => {
-            return {
-              id: user,
-            };
-          }),
+          connect: users,
         },
         nom,
         messageIds,

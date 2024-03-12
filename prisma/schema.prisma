@@ -20,8 +20,9 @@ model User {
   pseudo    String   @unique
   nom       String?
   prenom    String?
+  socketId  String?
   groupeIds String[] @db.ObjectId
-  groupes   Groupe[] @relation(fields: [groupeIds], references: [id]) // Correction ici
+  groupes   Groupe[] @relation(fields: [groupeIds], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -30,16 +31,15 @@ model Message {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   contenu   Json
   groupeId  String   @db.ObjectId
-  groupe    Groupe   @relation(fields: [groupeId], references: [id])
+  groupes   Groupe   @relation(fields: [groupeId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Groupe {
-  id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  userIds    String[]  @db.ObjectId
-  users      User[]    @relation(fields: [userIds], references: [id])
-  nom        String
-  messageIds String[]  @db.ObjectId
-  messages   Message[]
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  userIds  String[]  @db.ObjectId
+  users    User[]    @relation(fields: [userIds], references: [id])
+  nom      String
+  messages Message[]
 }

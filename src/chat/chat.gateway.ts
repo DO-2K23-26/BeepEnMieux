@@ -11,10 +11,10 @@ import {
   ServerToClientEvents,
   ClientToServerEvents,
   Message,
-  User,
 } from '../shared/interfaces/chat.interface'
 import { Server, Socket } from 'socket.io'
 import { UsersService } from '../users/users.service'
+import { User } from '@prisma/client'
 
 @WebSocketGateway({
   cors: {

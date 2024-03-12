@@ -2,7 +2,7 @@ import { Controller, Request, Post, UseGuards, Body, Get, Headers, NotAcceptable
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 
-@Controller()
+@Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) { }
 
