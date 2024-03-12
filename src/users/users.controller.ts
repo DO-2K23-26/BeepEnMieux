@@ -1,18 +1,18 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { User } from '@prisma/client';
-import { Room } from '../shared/interfaces/chat.interface';
+import { User, Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { Room } from '../shared/interfaces/chat.interface';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UsersService } from './users.service';
 
 @Controller('user')
 export class UsersController {
@@ -21,15 +21,13 @@ export class UsersController {
   @Post('/signup')
   async createUser(
     @Body('password') password: string,
-    @Body('username') username: string,
     @Body('email') email: string,
   ): Promise<User> {
     const saltOrRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltOrRounds);
-    const user: CreateUserDto = {
+    const user: Prisma.UserCreateInput = {
       email: email,
-      pseudo: username,
-      mdp: hashedPassword,
+      password: hashedPassword,
     };
     const result = await this.usersService.create(user);
     return result;

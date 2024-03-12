@@ -1,23 +1,22 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { GroupeService } from './groupe.service';
-import { CreateGroupeDto } from './dto/create-groupe.dto';
-import { UpdateGroupeDto } from './dto/update-groupe.dto';
 
 @Controller('groupe')
 export class GroupeController {
   constructor(private readonly groupeService: GroupeService) {}
 
   @Post()
-  create(@Body() createGroupeDto: CreateGroupeDto) {
-    return this.groupeService.create(createGroupeDto);
+  create(@Body() groupe: Prisma.GroupeCreateInput) {
+    return this.groupeService.create(groupe);
   }
 
   @Get()
@@ -26,17 +25,17 @@ export class GroupeController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: number) {
     return this.groupeService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGroupeDto: UpdateGroupeDto) {
-    return this.groupeService.update(id, updateGroupeDto);
+  update(@Param('id') id: number, @Body() groupe: Prisma.GroupeUpdateInput) {
+    return this.groupeService.update(id, groupe);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: number) {
     return this.groupeService.remove(id);
   }
 }

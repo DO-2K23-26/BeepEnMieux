@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from '@prisma/client';
-import { Room } from '../shared/interfaces/chat.interface';
+import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
+import { Room } from '../shared/interfaces/chat.interface';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -13,13 +12,13 @@ export class UsersService {
 
   async findOneById(id: number): Promise<User> {
     return this.prisma.user.findUnique({
-      where: { id: id.toString() },
+      where: { id },
     });
   }
 
-  async findOneByPseudo(pseudo: string): Promise<User> {
+  async findOneByEmail(email: string): Promise<User> {
     return this.prisma.user.findUnique({
-      where: { pseudo },
+      where: { email },
     });
   }
 
@@ -91,10 +90,10 @@ export class UsersService {
     return this.rooms;
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const { email, mdp, pseudo, nom, prenom } = createUserDto;
+  async create(createUserDto: Prisma.UserCreateInput): Promise<User> {
+    const { email, password } = createUserDto;
     return this.prisma.user.create({
-      data: { email, mdp, pseudo, nom, prenom },
+      data: { email, password },
     });
   }
 
@@ -104,14 +103,14 @@ export class UsersService {
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User | null> {
     return this.prisma.user.update({
-      where: { id: id.toString() },
+      where: { id },
       data: updateUserDto,
     });
   }
 
   remove(id: number) {
     return this.prisma.user.delete({
-      where: { id: id.toString() },
+      where: { id },
     });
   }
 }
