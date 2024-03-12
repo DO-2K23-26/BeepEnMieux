@@ -41,5 +41,5 @@ model Groupe {
   userIds  String[]  @db.ObjectId
   users    User[]    @relation(fields: [userIds], references: [id])
   nom      String
-  messages Message[]
+  messages Message[] 
 }

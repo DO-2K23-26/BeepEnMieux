@@ -9,17 +9,15 @@ export class GroupeService {
   constructor(private readonly prisma: PrismaService) {}
 
   create(createGroupeDto: CreateGroupeDto) {
-    const { id, userIds, users, nom, messageIds, messages } = createGroupeDto;
+    const { id, userIds, nom, messages } = createGroupeDto;
     return this.prisma.groupe.create({
       data: {
         id,
         userIds,
-        users: {
-          connect: users,
-        },
         nom,
-        messageIds,
-        messages,
+        messages: {
+          create: messages,
+        },
       },
     });
   }
