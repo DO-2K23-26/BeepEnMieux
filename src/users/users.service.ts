@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { Room } from '../shared/interfaces/chat.interface';
 import { UpdateUserDto } from './dto/update-user.dto';
 
