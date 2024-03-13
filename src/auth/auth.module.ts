@@ -6,6 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { UsersService } from '../users/users.service';
 import { LocalStrategy } from './local.auth';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { LocalStrategy } from './local.auth';
       secret: 'secretKey',
       signOptions: { expiresIn: '60s' },
     }),
+    PrismaModule
   ],
   providers: [AuthService, UsersService, LocalStrategy],
   controllers: [AuthController],
