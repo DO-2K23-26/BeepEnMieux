@@ -18,7 +18,7 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post('/signup')
+  @Post()
   async createUser(
     @Body('password') password: string,
     @Body('email') email: string,
@@ -43,11 +43,6 @@ export class UsersController {
     const rooms = await this.usersService.getRooms();
     const room = await this.usersService.getRoomByName(params.room);
     return rooms[room];
-  }
-
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
   }
 
   @Get()
