@@ -2,6 +2,7 @@ import { Injectable, NotAcceptableException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class AuthService {
@@ -33,11 +34,11 @@ export class AuthService {
   }
 
   async refreshToken(user: any) {
-      const tokenId = uuid();
-      const payload = { email: user.email, sub: user._id, tokenId: tokenId};
-      return {
-          access_token: this.jwtService.sign(payload, { expiresIn: '15m' }),
-      };
+    const tokenId = uuid();
+    const payload = { email: user.email, sub: user._id, tokenId: tokenId};
+    return {
+      access_token: this.jwtService.sign(payload, { expiresIn: '15m' }),
+    };
   }
 
   async infoUser(jwtToken: string): Promise<any> {
