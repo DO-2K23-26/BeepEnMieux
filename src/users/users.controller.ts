@@ -22,7 +22,7 @@ export class UsersController {
   async createUser(
     @Body('password') password: string,
     @Body('email') email: string,
-  ): Promise<User> {
+  ): Promise<Omit<User, 'password'>> {
     const saltOrRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltOrRounds);
     const user: Prisma.UserCreateInput = {

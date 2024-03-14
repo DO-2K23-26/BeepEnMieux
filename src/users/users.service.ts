@@ -100,8 +100,12 @@ export class UsersService {
     return this.rooms;
   }
 
-  async create(createUserDto: Prisma.UserCreateInput): Promise<User> {
+  async create(createUserDto: Prisma.UserCreateInput): Promise<Omit<User, 'password'> | null>{
     const { email, password } = createUserDto;
+    const existingUser = await this.prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      throw new HttpException("User with email: " + email + " already exists", HttpStatus.NOT_FOUND);
+    }
     return this.prisma.user.create({
       data: { email, password },
     });
