@@ -23,9 +23,13 @@ export class UsersService {
   }
 
   async findOneByEmail(email: string): Promise<User> {
-    return this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { email },
     });
+    if (!user) {
+      throw new HttpException("User with email: " + email + " not found", HttpStatus.NOT_FOUND);
+    }
+    return user;
   }
 
   async addRoom(roomName: string, host: User): Promise<void> {
@@ -97,9 +101,6 @@ export class UsersService {
   }
 
   async create(createUserDto: Prisma.UserCreateInput): Promise<User> {
-    if (this.findOneByEmail(createUserDto.email)) {
-      throw new HttpException("User with email: " + createUserDto.email + " already exists", HttpStatus.CONFLICT);
-    }
     const { email, password } = createUserDto;
     return this.prisma.user.create({
       data: { email, password },
