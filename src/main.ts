@@ -15,6 +15,7 @@ async function bootstrap() {
     { bufferLogs: true },
   );
   app.useLogger(app.get(Logger));
+  app.enableCors();
   await app.listen(9644, '0.0.0.0');
 }
 bootstrap();
