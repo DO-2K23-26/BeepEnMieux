@@ -32,8 +32,6 @@ COPY prisma/schema.prisma ./prisma/schema.prisma
 # Generate the Prisma client.
 RUN npx prisma generate
 
-RUN prisma migrate dev
-
 ################################################################################
 # Create a stage for building the application.
 FROM deps as build
