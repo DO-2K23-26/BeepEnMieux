@@ -25,8 +25,8 @@ export class GroupeController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: number) {
-    return this.groupeService.findOne(id);
+  findOne(@Param('id') id: string) {
+    return this.groupeService.findOne(Number(id));
   }
 
   @Patch(':id')
