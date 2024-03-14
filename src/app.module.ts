@@ -7,6 +7,7 @@ import { MessageModule } from './message/message.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PrismaService } from './prisma/prisma.service';
 import { UsersModule } from './users/users.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UsersModule } from './users/users.module';
     LoggerModule.forRoot(),
   ],
   providers: [PrismaService],
+  controllers: [AppController],
   exports: [PrismaService],
 })
 export class AppModule {}
