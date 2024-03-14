@@ -10,8 +10,8 @@ export class UsersService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOneById(id: number): Promise<{message: string, user: Promise<User>}>{
-    const my_user = this.prisma.user.findUnique({where: { id }});
+  async findOneById(id: number): Promise<{message: string, user: User}>{
+    const my_user = await this.prisma.user.findUnique({where: { id }});
     if (my_user) {
       return {
         message: "User id: " + id + " found",
