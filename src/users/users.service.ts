@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Room } from '../shared/interfaces/chat.interface';
@@ -17,7 +17,7 @@ export class UsersService {
         message: "User id: " + id + " found",
         user: my_user};
     } else {
-      throw new Error("User id: " + id + " not found");
+      throw new HttpException("User id: " + id + " not found", HttpStatus.NOT_FOUND);
     }
      
   }
