@@ -17,14 +17,12 @@ export class UsersService {
         message: "User id: " + id + " found",
         user: my_user};
     } else {
-      return {
-        message: "User id: " + id + " not found",
-        user: my_user};
+      throw new Error("User id: " + id + " not found");
     }
      
   }
 
-  async findOneByEmail(email: string): Promise<User> {
+  async findOneByEmail(email: string): Promise<{message: MessageChannel, user: User}> {
     return this.prisma.user.findUnique({
       where: { email },
     });
