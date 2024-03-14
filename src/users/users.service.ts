@@ -107,19 +107,7 @@ export class UsersService {
     return this.prisma.user.findMany();
   }
 
-  // async update(id: number, updateUserDto: UpdateUserDto): Promise<User | null> {
-  //   const user = await this.prisma.user.findUnique({ where: { id } });
-  //   if (!user) {
-  //     throw new HttpException("User id: " + id + " not found", HttpStatus.NOT_FOUND);
-  //   }
-  //   const { password, ...data } = updateUserDto;
-  //   return this.prisma.user.update({
-  //     where: { id },
-  //     data,
-  //   });
-  // }
-
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User | null> {
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<Omit<User, 'password'> | null> {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new HttpException("User id: " + id + " not found", HttpStatus.NOT_FOUND);
@@ -135,19 +123,21 @@ export class UsersService {
     });
   
     // Supprimer le mot de passe du résultat retourné
-    updatedUser.password = "Bah non enfin, c'est privé !";
+    updatedUser.password = undefined;
     return updatedUser;
   }
   
   
 
-  async remove(id: number) {
+  async remove(id: number): Promise<Omit<User, 'password'> | null> {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new HttpException("User id: " + id + " not found", HttpStatus.NOT_FOUND);
     }
-    return this.prisma.user.delete({
+    const deleteUser = await this.prisma.user.delete({
       where: { id },
     });
+    deleteUser.password = undefined;
+    return deleteUser;
   }
 }
