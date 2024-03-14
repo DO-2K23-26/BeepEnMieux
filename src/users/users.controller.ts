@@ -56,7 +56,10 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    const saltOrRounds = 10;
+    const hashedPassword = await bcrypt.hash(updateUserDto.password, saltOrRounds);
+    updateUserDto.password = hashedPassword;
     return this.usersService.update(Number(id), updateUserDto);
   }
 
