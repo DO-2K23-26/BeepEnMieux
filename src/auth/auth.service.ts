@@ -27,6 +27,18 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     };
   }
+  async verifyRefreshToken(jwtToken: string) {
+      const decodedToken = this.jwtService.decode(jwtToken);
+      return decodedToken.email;
+  }
+
+  async refreshToken(user: any) {
+      const tokenId = uuid();
+      const payload = { email: user.email, sub: user._id, tokenId: tokenId};
+      return {
+          access_token: this.jwtService.sign(payload, { expiresIn: '15m' }),
+      };
+  }
 
   async infoUser(jwtToken: string): Promise<any> {
     const decodedToken = this.jwtService.decode(jwtToken);
