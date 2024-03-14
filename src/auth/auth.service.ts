@@ -22,10 +22,15 @@ export class AuthService {
     }
     return null;
   }
-  async login(user: any) {
+  
+  async login(email: string, password: string) {
+    const user = await this.validateUser(email, password);
+    if (!user) {
+      throw new NotAcceptableException('Invalid email or password');
+    }
     const payload = { email: user.email, sub: user._id };
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: this.jwtService.sign(payload, { expiresIn: '5m' }),
     };
   }
   async verifyRefreshToken(jwtToken: string) {

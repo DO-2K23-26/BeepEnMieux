@@ -7,23 +7,31 @@ export class AuthController {
     constructor(private authService: AuthService) { }
 
     @Post('login')
-    async login(@Request() req, @Res() res) {
-        const accessToken = await this.authService.login(req.body);
-        const refreshToken = await this.authService.refreshToken(req.body);
+    async login(@Body() body, @Res() res) {
+        const accessToken = await this.authService.login(body.email,body.password);
+        const refreshToken = await this.authService.refreshToken(body);
 
-        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict' });
-        return accessToken
+        const response = {
+            accessToken,
+            refreshToken
+        };
+
+        return res.send(response);
     }
 
     @Post('refresh')
     async refreshToken(@Request() req, @Body() body, @Res() res) {
         const oldRefreshToken = req.cookies['refreshToken'];
         const email = this.authService.verifyRefreshToken(oldRefreshToken);
-        const accessToken = await this.authService.login({ email });
+        const accessToken = await this.authService.login(body.email,body.password);
         const refreshToken = await this.authService.refreshToken({ email });
+        
+        const response = {
+            accessToken,
+            refreshToken
+        };
 
-        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict' });
-        return accessToken
+        return res.send(response);
     }
 
     @UseGuards(AuthGuard('local'))
@@ -35,7 +43,9 @@ export class AuthController {
 
         // Extrait le token du body "authorization" (format: "Bearer <token>")
         const token = authorization.split(' ')[1];
-
+        console.log(token);
+        console.log(authorization);
+        
         // Vérifie le token et récupère les informations de l'utilisateur
         const userProfile = await this.authService.infoUser(token);
 
