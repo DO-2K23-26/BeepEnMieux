@@ -11,7 +11,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
   async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.usersService.findOneByEmail(email);
+    const user = (await this.usersService.findOneByEmail(email));
     if (!user) return null;
     const passwordValid = await bcrypt.compare(password, user.password);
     if (!user) {
@@ -44,7 +44,13 @@ export class AuthService {
   async infoUser(jwtToken: string): Promise<any> {
     const decodedToken = this.jwtService.decode(jwtToken);
     console.log(decodedToken, jwtToken);
-
-    return await this.usersService.findOneByEmail(decodedToken.email);
+    const my_mail = await this.usersService.findOneByEmail(decodedToken.email);
+    if (my_mail) {
+      return {
+        message: "User found",
+        user: my_mail};
+    } else {
+      throw new NotAcceptableException('could not find the user');
+    }
   }
 }
