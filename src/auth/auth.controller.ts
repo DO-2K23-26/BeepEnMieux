@@ -15,13 +15,13 @@ import { AuthGuard } from '@nestjs/passport';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('auth/login')
+  @Post('login')
   async login(@Request() req) {
     return this.authService.login(req.body);
   }
 
   @UseGuards(AuthGuard('local'))
-  @Get('auth/@me')
+  @Get('@me')
   async getProfile(
     @Headers('authorization') authorization: string,
   ): Promise<any> {
