@@ -30,6 +30,6 @@ export class MessageService {
   }
   
   findAllByGroup(id: number) {
-    return this.prisma.message.findMany({ where: { groupeId: id } });
+    return this.prisma.message.findMany({ where: { groupeId: Number(id) } });
   }
 }
