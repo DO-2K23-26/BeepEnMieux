@@ -97,6 +97,9 @@ export class UsersService {
   }
 
   async create(createUserDto: Prisma.UserCreateInput): Promise<User> {
+    if (this.findOneByEmail(createUserDto.email)) {
+      throw new HttpException("User with email: " + createUserDto.email + " already exists", HttpStatus.CONFLICT);
+    }
     const { email, password } = createUserDto;
     return this.prisma.user.create({
       data: { email, password },
