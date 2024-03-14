@@ -112,9 +112,10 @@ export class UsersService {
     if (!user) {
       throw new HttpException("User id: " + id + " not found", HttpStatus.NOT_FOUND);
     }
+    const { password, ...data } = updateUserDto;
     return this.prisma.user.update({
       where: { id },
-      data: updateUserDto,
+      data,
     });
   }
 
