@@ -17,7 +17,17 @@ import { AppController } from './app.controller';
     AuthModule,
     ChatModule,
     PrismaModule,
-    LoggerModule.forRoot(),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            colorize: true,
+            // singleLine: true,
+          },
+        },
+      },
+    }),
   ],
   providers: [PrismaService],
   controllers: [AppController],
