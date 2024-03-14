@@ -107,17 +107,39 @@ export class UsersService {
     return this.prisma.user.findMany();
   }
 
+  // async update(id: number, updateUserDto: UpdateUserDto): Promise<User | null> {
+  //   const user = await this.prisma.user.findUnique({ where: { id } });
+  //   if (!user) {
+  //     throw new HttpException("User id: " + id + " not found", HttpStatus.NOT_FOUND);
+  //   }
+  //   const { password, ...data } = updateUserDto;
+  //   return this.prisma.user.update({
+  //     where: { id },
+  //     data,
+  //   });
+  // }
+
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User | null> {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new HttpException("User id: " + id + " not found", HttpStatus.NOT_FOUND);
     }
+    
+    // Exclure la propriété password de l'objet updateUserDto
     const { password, ...data } = updateUserDto;
-    return this.prisma.user.update({
+  
+    // Mettre à jour l'utilisateur avec les données excluant le mot de passe
+    const updatedUser = await this.prisma.user.update({
       where: { id },
       data,
     });
+  
+    // Supprimer le mot de passe du résultat retourné
+    updatedUser.password = "Bah non enfin, c'est privé !";
+    return updatedUser;
   }
+  
+  
 
   async remove(id: number) {
     const user = await this.prisma.user.findUnique({ where: { id } });
