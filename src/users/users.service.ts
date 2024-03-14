@@ -103,8 +103,12 @@ export class UsersService {
     });
   }
 
-  findAll() {
-    return this.prisma.user.findMany();
+  async findAll() {
+    const users = await this.prisma.user.findMany();
+    for (const user of users) {
+      user.password = undefined;
+    } 
+    return users;
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<Omit<User, 'password'> | null> {
