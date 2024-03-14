@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -15,7 +15,11 @@ export class GroupeService {
   }
 
   async findOne(id: number) {
-    return this.prisma.groupe.findUnique({ where: { id } });
+    const groupe = await this.prisma.groupe.findUnique({ where: { id } });
+    if (!groupe) {
+      throw new HttpException(`Groupe with id ${id} not found`, HttpStatus.NOT_FOUND);
+    }
+    return groupe;
   }
 
   async update(id: number, groupe: Prisma.GroupeUpdateInput) {
