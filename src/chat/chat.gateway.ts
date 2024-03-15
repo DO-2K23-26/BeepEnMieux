@@ -10,11 +10,12 @@ import { Logger } from '@nestjs/common';
 import {
   ServerToClientEvents,
   ClientToServerEvents,
-  Message,
 } from '../shared/interfaces/chat.interface';
 import { Server, Socket } from 'socket.io';
 import { UsersService } from '../users/users.service';
-import { User } from '@prisma/client';
+import { Message } from '@prisma/client';
+import { GroupeService } from 'src/groupe/groupe.service';
+import { AuthService } from 'src/auth/auth.service';
 
 @WebSocketGateway({
   cors: {
@@ -22,7 +23,7 @@ import { User } from '@prisma/client';
   },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(private userService: UsersService) {}
+  constructor(private userService: UsersService, private groupeService: GroupeService, private authService: AuthService) {}
 
   @WebSocketServer() server: Server = new Server<
     ServerToClientEvents,
@@ -36,34 +37,50 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody()
     payload: Message,
   ): Promise<Message> {
-    this.logger.log(payload);
-    this.server.to(payload.roomName).emit('chat', payload); // broadcast messages
+    const groupe = this.groupeService.findOne(payload.groupeId);
+    this.server.to((await groupe).nom).emit('chat', payload); // broadcast messages
+    this.logger.log(`Message sent to ${(await groupe).nom}`);
     return payload;
   }
 
   @SubscribeMessage('join_room')
   async handleSetClientDataEvent(
     @MessageBody()
-    payload: {
-      roomName: string;
-      user: User;
-    },
+    payload: Message,
   ) {
-    if (payload.user.socketId) {
+    const author = (await this.userService.findOneById(payload.authorId)).user;
+    const groupe = (await this.groupeService.findOne(payload.groupeId));
+    if (author.socketId) {
       this.logger.log(
-        `${payload.user.socketId} is joining ${payload.roomName}`,
+        `${author.socketId} is joining ${groupe.nom}`,
       );
-      this.server.in(payload.user.socketId).socketsJoin(payload.roomName);
-      this.userService.addUserToRoom(payload.roomName, payload.user);
+      this.server.in(author.socketId).socketsJoin(groupe.nom);
+      this.userService.addUserToGroupe(groupe.nom, author);
     }
   }
 
   async handleConnection(socket: Socket): Promise<void> {
+    const token = socket.handshake.auth.token;
+    const user = (await this.authService.infoUser(token))?.user;
+    if (!user) {
+      this.logger.log(`Invalid token: ${token}`);
+      socket.disconnect();
+      return;
+    }
+    const groupes = await this.userService.findGroupesByUserSocketId(socket.id);
+    this.userService.addSocketId(user, socket.id);
+    for (const groupe of groupes) {
+      socket.join(groupe.nom);
+    }
     this.logger.log(`Socket connected: ${socket.id}`);
   }
 
   async handleDisconnect(socket: Socket): Promise<void> {
-    await this.userService.removeUserFromAllRooms(socket.id);
+    this.userService.removeSocketId(socket.id);
+    const groupes = await this.userService.findGroupesByUserSocketId(socket.id);
+    for (const groupe of groupes) {
+      socket.leave(groupe.nom);
+    }
     this.logger.log(`Socket disconnected: ${socket.id}`);
   }
 }

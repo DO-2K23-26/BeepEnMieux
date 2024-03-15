@@ -25,6 +25,11 @@ export class MessageController {
     return this.messageService.findAll();
   }
 
+  @Get('group/:id')
+  findAllByGroup(@Param('id') id: number) {
+    return this.messageService.findAllByGroup(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: number) {
     return this.messageService.findOne(id);

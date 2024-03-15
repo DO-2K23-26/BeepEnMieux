@@ -9,8 +9,6 @@ import {
 } from '@nestjs/common';
 import { User, Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { Room } from '../shared/interfaces/chat.interface';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
@@ -18,11 +16,11 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post('/signup')
+  @Post()
   async createUser(
     @Body('password') password: string,
     @Body('email') email: string,
-  ): Promise<User> {
+  ): Promise<Omit<User, 'password'>> {
     const saltOrRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltOrRounds);
     const user: Prisma.UserCreateInput = {
@@ -31,23 +29,6 @@ export class UsersController {
     };
     const result = await this.usersService.create(user);
     return result;
-  }
-
-  @Get('api/rooms')
-  async getAllRooms(): Promise<Room[]> {
-    return await this.usersService.getRooms();
-  }
-
-  @Get('api/rooms/:room')
-  async getRoom(@Param() params): Promise<Room> {
-    const rooms = await this.usersService.getRooms();
-    const room = await this.usersService.getRoomByName(params.room);
-    return rooms[room];
-  }
-
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
   }
 
   @Get()
@@ -61,7 +42,10 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    const saltOrRounds = 10;
+    const hashedPassword = await bcrypt.hash(updateUserDto.password, saltOrRounds);
+    updateUserDto.password = hashedPassword;
     return this.usersService.update(Number(id), updateUserDto);
   }
 

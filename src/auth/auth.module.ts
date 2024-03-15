@@ -14,11 +14,12 @@ import { PrismaModule } from 'src/prisma/prisma.module';
     PassportModule,
     JwtModule.register({
       secret: 'secretKey',
-      signOptions: { expiresIn: '60s' },
+      signOptions: { expiresIn: '5m' },
     }),
     PrismaModule
   ],
   providers: [AuthService, UsersService, LocalStrategy],
   controllers: [AuthController],
+  exports: [AuthService],
 })
 export class AuthModule {}
