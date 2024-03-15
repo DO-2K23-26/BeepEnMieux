@@ -9,8 +9,8 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     @Post('login')
     async login(@Body() body, @Res() res) {
-        const accessToken = await this.authService.login(body.email,body.password);
-        const refreshToken = await this.authService.refreshToken(body);
+        const accessToken = (await this.authService.login(body.email,body.password)).access_token;
+        const refreshToken = (await this.authService.refreshToken(body)).refresh_token;
 
         const response = {
             accessToken,
@@ -24,8 +24,8 @@ export class AuthController {
     async refreshToken(@Request() req, @Body() body, @Res() res) {
         const oldRefreshToken = req.cookies['refreshToken'];
         const email = this.authService.verifyRefreshToken(oldRefreshToken);
-        const accessToken = await this.authService.login(body.email,body.password);
-        const refreshToken = await this.authService.refreshToken({ email });
+        const accessToken = (await this.authService.login(body.email,body.password)).access_token;
+        const refreshToken = (await this.authService.refreshToken({ email })).refresh_token;
         
         const response = {
             accessToken,
