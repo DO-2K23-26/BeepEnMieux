@@ -1,11 +1,12 @@
-import { Controller, Request, Post, UseGuards, Body, Get, Headers, NotAcceptableException, Res } from '@nestjs/common';
+import { Controller, Request, Post, UseGuards, Body, HttpCode, HttpStatus, Get, Headers, NotAcceptableException, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthGuard } from './auth.guard';
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) { }
 
+    @HttpCode(HttpStatus.OK)
     @Post('login')
     async login(@Body() body, @Res() res) {
         const accessToken = await this.authService.login(body.email,body.password);
@@ -34,7 +35,7 @@ export class AuthController {
         return res.send(response);
     }
 
-    @UseGuards(AuthGuard('local'))
+    @UseGuards(AuthGuard)
     @Get('@me')
     async getProfile(@Headers('authorization') authorization: string): Promise<any> {
         if (!authorization) {
