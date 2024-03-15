@@ -19,8 +19,6 @@ import { Message } from '@prisma/client';
 import { GroupeService } from 'src/groupe/groupe.service';
 import { AuthService } from 'src/auth/auth.service';
 import { MessageService } from 'src/message/message.service';
-import { CreateMessageDto } from 'src/message/dto/create-message.dto';
-import { ifError } from 'assert';
 
 @WebSocketGateway({
   cors: {
@@ -42,7 +40,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('chat')
   async handleChatEvent(
-    @MessageBody() data: Promise<{contenu: String, timestamp: number}>,
+    @MessageBody() data: Promise<{contenu: string, timestamp: number}>,
     @ConnectedSocket() client: Socket,
   ): Promise<Message> {
     const token = client.handshake.auth.token;
@@ -52,6 +50,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const groupeName = iterateur.next().value;
     const groupe = await this.groupeService.findByName(groupeName);
     if(!groupe || !author) {
+      this.logger.log(`Invalid groupe or author`);
       throw new WsException('Invalid groupe or author');
     }
     this.server.to(groupe.nom).emit('chat', data); // broadcast messages
@@ -70,7 +69,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleSetClientDataEvent(
     client: Socket, data: string
     ) {
-
+    console.log('join_room');
     //leave all rooms except current room
     const groupes = await this.userService.findGroupesByUserSocketId(client.id);
     for (const groupe of groupes) {

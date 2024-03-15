@@ -13,7 +13,6 @@ export class UsersService {
   }
   
   async removeSocketId(id: string) {
-    console.log("Removing socket id from user");
     await this.prisma.user.updateMany({
       where: { socketId: id },
       data: {
@@ -23,7 +22,6 @@ export class UsersService {
   }
   
   async addSocketId(user: User, id: string) {
-    console.log(`Adding socket id ${id} to user ${user.id}`);
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
@@ -53,7 +51,6 @@ export class UsersService {
   }
 
   async addUserToGroupe(groupeName: string, user: User): Promise<void> {
-    console.log("Adding user to groupe");
     await this.prisma.groupe.update({
       where: { nom: groupeName },
       data: {
