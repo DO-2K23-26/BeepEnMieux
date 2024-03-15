@@ -7,16 +7,22 @@ variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
 
 Buid image:
+  tags:
+    - shell
   stage: build
   script:
     - docker build -t $IMAGE_TAG .
 
 Build compose:
+  tags:
+    - shell
   stage: build
   script:
     - docker-compose -f compose.yaml up -d
 
 Store image:
+  tags:
+    - shell
   stage: store
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -25,6 +31,8 @@ Store image:
     - main
 
 Deploy to dokku:
+  tags:
+    - docker
   image: ilyasemenov/gitlab-ci-git-push
   stage: deploy
   environment:
