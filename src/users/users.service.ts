@@ -13,6 +13,7 @@ export class UsersService {
   }
   
   removeSocketId(id: string) {
+    console.log("Removing socket id from user");
     this.prisma.user.update({
       where: { socketId: id },
       data: {
@@ -21,8 +22,9 @@ export class UsersService {
     });
   }
   
-  addSocketId(user: User, id: string) {
-    this.prisma.user.update({
+  async addSocketId(user: User, id: string) {
+    console.log(`Adding socket id ${id} to user ${user.id}`);
+    await this.prisma.user.update({
       where: { id: user.id },
       data: {
         socketId: id,
@@ -51,7 +53,8 @@ export class UsersService {
   }
 
   async addUserToGroupe(groupeName: string, user: User): Promise<void> {
-    this.prisma.groupe.update({
+    console.log("Adding user to groupe");
+    await this.prisma.groupe.update({
       where: { nom: groupeName },
       data: {
         users: {

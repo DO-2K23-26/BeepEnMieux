@@ -59,17 +59,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('join_room')
   async handleSetClientDataEvent(
-    @MessageBody()
-    payload: Message,
+    client: Socket, data: string
   ) {
-    const author = (await this.userService.findOneById(payload.authorId)).user;
-    const groupe = (await this.groupeService.findOne(payload.groupeId));
-    if (author.socketId) {
+    const token = client.handshake.auth.token;
+    const user = (await this.authService.infoUser(token))?.user;
+    const groupe = await this.groupeService.findByName(data);
+    if (user.socketId) {
       this.logger.log(
-        `${author.socketId} is joining ${groupe.nom}`,
+        `${user.socketId} is joining ${groupe.nom}`,
       );
-      this.server.in(author.socketId).socketsJoin(groupe.nom);
-      this.userService.addUserToGroupe(groupe.nom, author);
+      this.server.in(user.socketId).socketsJoin(groupe.nom);
+      await this.userService.addUserToGroupe(groupe.nom, user);
     }
   }
 
@@ -82,7 +82,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     const groupes = await this.userService.findGroupesByUserSocketId(socket.id);
-    this.userService.addSocketId(user, socket.id);
+    await this.userService.addSocketId(user, socket.id);
     for (const groupe of groupes) {
       socket.join(groupe.nom);
     }
