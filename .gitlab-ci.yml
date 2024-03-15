@@ -18,7 +18,7 @@ Build compose:
     - shell
   stage: build
   script:
-    - docker-compose -f compose.yaml up -d
+    - docker compose -f compose.yaml up -d
 
 Store image:
   tags:
