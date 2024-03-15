@@ -9,8 +9,6 @@ import {
 } from '@nestjs/common';
 import { User, Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { Room } from '../shared/interfaces/chat.interface';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
@@ -31,18 +29,6 @@ export class UsersController {
     };
     const result = await this.usersService.create(user);
     return result;
-  }
-
-  @Get('api/rooms')
-  async getAllRooms(): Promise<Room[]> {
-    return await this.usersService.getRooms();
-  }
-
-  @Get('api/rooms/:room')
-  async getRoom(@Param() params): Promise<Room> {
-    const rooms = await this.usersService.getRooms();
-    const room = await this.usersService.getRoomByName(params.room);
-    return rooms[room];
   }
 
   @Get()
