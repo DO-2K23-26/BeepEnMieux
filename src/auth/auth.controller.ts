@@ -1,15 +1,17 @@
-import { Controller, Request, Post, UseGuards, Body, Get, Headers, NotAcceptableException, Res } from '@nestjs/common';
+import { Controller, Request, Post, UseGuards, Body, HttpCode, HttpStatus, Get, Headers, NotAcceptableException, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthGuard } from './auth.guard';
+import { User } from '@prisma/client';
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) { }
 
+    @HttpCode(HttpStatus.OK)
     @Post('login')
     async login(@Body() body, @Res() res) {
-        const accessToken = await this.authService.login(body.email,body.password);
-        const refreshToken = await this.authService.refreshToken(body);
+        const accessToken = (await this.authService.login(body.email,body.password)).access_token;
+        const refreshToken = (await this.authService.refreshToken(body)).refresh_token;
 
         const response = {
             accessToken,
@@ -23,8 +25,8 @@ export class AuthController {
     async refreshToken(@Request() req, @Body() body, @Res() res) {
         const oldRefreshToken = req.cookies['refreshToken'];
         const email = this.authService.verifyRefreshToken(oldRefreshToken);
-        const accessToken = await this.authService.login(body.email,body.password);
-        const refreshToken = await this.authService.refreshToken({ email });
+        const accessToken = (await this.authService.login(body.email,body.password)).access_token;
+        const refreshToken = (await this.authService.refreshToken({ email })).refresh_token;
         
         const response = {
             accessToken,
@@ -34,9 +36,9 @@ export class AuthController {
         return res.send(response);
     }
 
-    @UseGuards(AuthGuard('local'))
+    @UseGuards(AuthGuard)
     @Get('@me')
-    async getProfile(@Headers('authorization') authorization: string): Promise<any> {
+    async getProfile(@Headers('authorization') authorization: string): Promise<Omit<User, 'password'>> {
         if (!authorization) {
             throw new NotAcceptableException('could not find the jwt token');
         }

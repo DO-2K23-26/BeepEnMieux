@@ -27,7 +27,7 @@ export class UsersService {
   }
 
 
-  async findOneById(id: number): Promise<{message: string, user: User}>{
+  async findOneById(id: number): Promise<{message: string, user: Omit<User, 'password'>}>{
     const my_user = await this.prisma.user.findUnique({where: { id }});
     if (my_user) {
       return {

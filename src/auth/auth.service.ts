@@ -1,4 +1,6 @@
 import { Injectable, NotAcceptableException } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -24,7 +26,7 @@ export class AuthService {
     return null;
   }
   
-  async login(email: string, password: string) {
+  async login(email: string, password: string): Promise<{ access_token: string }> {
     const user = await this.validateUser(email, password);
     if (!user) {
       throw new NotAcceptableException('Invalid email or password');
@@ -43,7 +45,7 @@ export class AuthService {
     const tokenId = uuid();
     const payload = { email: user.email, sub: user._id, tokenId: tokenId};
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '15m' }),
+      refresh_token: this.jwtService.sign(payload, { expiresIn: '15m' }),
     };
   }
 
