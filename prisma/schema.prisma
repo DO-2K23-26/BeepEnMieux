@@ -32,8 +32,9 @@ model Groupe {
 model Message {
   id        Int    @id @default(autoincrement())
   contenu   String
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  Int?
-  groupe    Groupe?  @relation(fields: [groupeId], references: [id])
-  groupeId  Int?
+  author    User    @relation(fields: [authorId], references: [id])
+  authorId  Int
+  groupe    Groupe  @relation(fields: [groupeId], references: [id])
+  groupeId  Int
+  timestamp BigInt
 }

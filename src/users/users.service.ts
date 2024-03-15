@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { Groupe, Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -7,7 +7,11 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UsersService {
   
   constructor(private readonly prisma: PrismaService) {}
-
+  
+  findByEmail(author: string) {
+    return this.prisma.user.findFirst({ where: { email: author } });
+  }
+  
   removeSocketId(id: string) {
     this.prisma.user.update({
       where: { socketId: id },
@@ -39,13 +43,10 @@ export class UsersService {
      
   }
 
-  async findOneByEmail(email: string): Promise<User> {
+  async findOneByEmail(email: string): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
-    if (!user) {
-      throw new HttpException("User with email: " + email + " not found", HttpStatus.NOT_FOUND);
-    }
     return user;
   }
 

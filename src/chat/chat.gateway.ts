@@ -5,6 +5,7 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  WsException,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import {
@@ -16,6 +17,8 @@ import { UsersService } from '../users/users.service';
 import { Message } from '@prisma/client';
 import { GroupeService } from 'src/groupe/groupe.service';
 import { AuthService } from 'src/auth/auth.service';
+import { MessageService } from 'src/message/message.service';
+import { CreateMessageDto } from 'src/message/dto/create-message.dto';
 
 @WebSocketGateway({
   cors: {
@@ -23,7 +26,10 @@ import { AuthService } from 'src/auth/auth.service';
   },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(private userService: UsersService, private groupeService: GroupeService, private authService: AuthService) {}
+  constructor(private userService: UsersService, 
+    private groupeService: GroupeService, 
+    private authService: AuthService,
+    private messageService: MessageService) {}
 
   @WebSocketServer() server: Server = new Server<
     ServerToClientEvents,
@@ -35,10 +41,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('chat')
   async handleChatEvent(
     @MessageBody()
-    payload: Message,
+    payload: any,
   ): Promise<Message> {
-    const groupe = this.groupeService.findOne(payload.groupeId);
+    const groupe = await this.groupeService.findByName(payload.groupe);
+    const author = await this.userService.findByEmail(payload.author);
+    console.log(payload);
+    if(!groupe || !author) {
+      throw new WsException('Invalid groupe or author');
+    }
+    payload.author = author;
+    payload.groupe = groupe;
     this.server.to((await groupe).nom).emit('chat', payload); // broadcast messages
+    this.messageService.create(payload);
     this.logger.log(`Message sent to ${(await groupe).nom}`);
     return payload;
   }

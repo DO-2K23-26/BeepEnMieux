@@ -37,7 +37,16 @@ export class MessageController {
 
   @Patch(':id')
   update(@Param('id') id: number, @Body() updateMessageDto: UpdateMessageDto) {
-    return this.messageService.update(id, updateMessageDto);
+  const messageUpdateInput = {
+    ...updateMessageDto,
+    author: {
+    connect: { id: updateMessageDto.author.id }
+    },
+    groupe: {
+    connect: { id: updateMessageDto.groupe.id }
+    }
+  };
+    return this.messageService.update(id, messageUpdateInput);
   }
 
   @Delete(':id')

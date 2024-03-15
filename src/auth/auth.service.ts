@@ -58,8 +58,7 @@ export class AuthService {
       return {
         message: "User found",
         user: my_mail};
-    } else {
-      throw new NotAcceptableException('could not find the user');
-    }
+    } 
+    return null;
   }
 }
