@@ -34,8 +34,6 @@ Store image:
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker push $IMAGE_TAG
-  dependencies:
-    - build
   only:
     - main
 
@@ -47,7 +45,5 @@ Deploy to dokku:
     url: http://localhost:9644
   only:
     - main
-  dependencies:
-    - build
   script:
     - git-push ssh://dokku@162.38.112.145:22/beepenmieux
