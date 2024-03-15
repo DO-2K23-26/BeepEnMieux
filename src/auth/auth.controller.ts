@@ -45,13 +45,11 @@ export class AuthController {
 
         // Extrait le token du body "authorization" (format: "Bearer <token>")
         const token = authorization.split(' ')[1];
-        console.log(token);
-        console.log(authorization);
         
         // Vérifie le token et récupère les informations de l'utilisateur
         const userProfile = await this.authService.infoUser(token);
-
         // Utilisez les informations de l'utilisateur comme nécessaire
-        return userProfile;
+        const { password, ...userProfileWithoutPassword } = userProfile.user;
+        return userProfileWithoutPassword;
     }
 }

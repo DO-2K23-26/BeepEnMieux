@@ -27,14 +27,14 @@ export class UsersService {
   }
 
 
-  async findOneById(id: number): Promise<{message: string, user: Omit<User, 'password'>}>{
+  async findOneById(id: number): Promise<{message: string, user: User | null}> {
     const my_user = await this.prisma.user.findUnique({where: { id }});
     if (my_user) {
       return {
         message: "User id: " + id + " found",
         user: my_user};
     } else {
-      throw new HttpException("User id: " + id + " not found", HttpStatus.NOT_FOUND);
+      return null;
     }
      
   }

@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -11,6 +13,7 @@ import { User, Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
+import { OmitType } from '@nestjs/mapped-types';
 
 @Controller('user')
 export class UsersController {
@@ -37,8 +40,13 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOneById(@Param('id') id: string) {
-    return this.usersService.findOneById(Number(id));
+  async findOneById(@Param('id') id: string) {
+    let user = (await this.usersService.findOneById(Number(id)));
+    if (!user) {
+      throw new HttpException("User id: " + id + " not found", HttpStatus.NOT_FOUND);
+    }
+    user.user.password = null;
+    return user;
   }
 
   @Patch(':id')
