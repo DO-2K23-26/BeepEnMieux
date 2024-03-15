@@ -7,7 +7,7 @@ variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
 
 Buid image:
-  image: docker:latest
+  image: docker/compose:latest
   stage: build
   services:
     - docker:dind
@@ -21,10 +21,6 @@ Build compose:
     - docker:dind
   script:
     - docker-compose -f compose.yaml up -d
-  after_script:
-  - docker-compose down
-  - docker system prune -f
-
 
 Store image:
   image: docker:latest
