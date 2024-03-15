@@ -12,18 +12,12 @@ Buid image:
     - docker build -t $IMAGE_TAG .
 
 Build compose:
-  image: docker/compose:latest
   stage: build
-  services:
-    - docker:dind
   script:
     - docker-compose -f compose.yaml up -d
 
 Store image:
-  image: docker:latest
   stage: store
-  services:
-    - docker:dind
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker push $IMAGE_TAG
