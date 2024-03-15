@@ -15,6 +15,7 @@ import { Server, Socket } from 'socket.io';
 import { UsersService } from '../users/users.service';
 import { Message } from '@prisma/client';
 import { GroupeService } from 'src/groupe/groupe.service';
+import { AuthService } from 'src/auth/auth.service';
 
 @WebSocketGateway({
   cors: {
@@ -22,7 +23,7 @@ import { GroupeService } from 'src/groupe/groupe.service';
   },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(private userService: UsersService, private groupeService: GroupeService) {}
+  constructor(private userService: UsersService, private groupeService: GroupeService, private authService: AuthService) {}
 
   @WebSocketServer() server: Server = new Server<
     ServerToClientEvents,
@@ -58,12 +59,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  async handleConnection(socket: Socket, ...args: any[]): Promise<void> {
-    this.userService.addSocketId(args[0], socket.id);
+  async handleConnection(socket: Socket): Promise<void> {
+    const token = socket.handshake.auth.token;
+    const user = (await this.authService.infoUser(token))?.user;
+    if (!user) {
+      this.logger.log(`Invalid token: ${token}`);
+      socket.disconnect();
+      return;
+    }
+    const groupes = await this.userService.findGroupesByUserSocketId(socket.id);
+    this.userService.addSocketId(user, socket.id);
+    for (const groupe of groupes) {
+      socket.join(groupe.nom);
+    }
     this.logger.log(`Socket connected: ${socket.id}`);
   }
 
   async handleDisconnect(socket: Socket): Promise<void> {
+    this.userService.removeSocketId(socket.id);
+    const groupes = await this.userService.findGroupesByUserSocketId(socket.id);
+    for (const groupe of groupes) {
+      socket.leave(groupe.nom);
+    }
     this.logger.log(`Socket disconnected: ${socket.id}`);
   }
 }

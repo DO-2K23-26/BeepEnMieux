@@ -6,6 +6,17 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @Injectable()
 export class UsersService {
   
+  constructor(private readonly prisma: PrismaService) {}
+
+  removeSocketId(id: string) {
+    this.prisma.user.update({
+      where: { socketId: id },
+      data: {
+        socketId: null,
+      },
+    });
+  }
+  
   addSocketId(user: User, id: string) {
     this.prisma.user.update({
       where: { id: user.id },
@@ -15,7 +26,6 @@ export class UsersService {
     });
   }
 
-  constructor(private readonly prisma: PrismaService) {}
 
   async findOneById(id: number): Promise<{message: string, user: User}>{
     const my_user = await this.prisma.user.findUnique({where: { id }});
