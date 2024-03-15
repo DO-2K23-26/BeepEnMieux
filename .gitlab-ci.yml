@@ -5,6 +5,7 @@ stages:
 
 variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  DOCKER_HOST: tcp://localhost:2375
 
 before_script:
   - docker info
