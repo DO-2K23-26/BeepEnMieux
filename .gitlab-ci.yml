@@ -15,14 +15,18 @@ Buid image:
     - docker build -t $IMAGE_TAG .
 
 Build compose:
-  image: docker:latest
+  image: docker/compose:latest
   stage: build
   services:
     - docker:dind
   script:
     - docker-compose -f compose.yaml up -d
+  after_script:
+  - docker-compose down
+  - docker system prune -f
 
-store:
+
+Store image:
   image: docker:latest
   stage: store
   services:
@@ -30,10 +34,12 @@ store:
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker push $IMAGE_TAG
+  dependencies:
+    - build
   only:
     - main
 
-deploy:
+Deploy to dokku:
   image: ilyasemenov/gitlab-ci-git-push
   stage: deploy
   environment:
@@ -41,5 +47,7 @@ deploy:
     url: http://localhost:9644
   only:
     - main
+  dependencies:
+    - build
   script:
     - git-push ssh://dokku@162.38.112.145:22/beepenmieux
