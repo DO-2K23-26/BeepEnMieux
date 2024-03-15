@@ -1,5 +1,37 @@
 stages:
+  - build
+  - store
   - deploy
+
+variables:
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+
+Buid image:
+  image: docker:latest
+  stage: build
+  services:
+    - docker:dind
+  script:
+    - docker build -t $IMAGE_TAG .
+
+Build compose:
+  image: docker:latest
+  stage: build
+  services:
+    - docker:dind
+  script:
+    - docker-compose -f compose.yaml up -d
+
+store:
+  image: docker:latest
+  stage: store
+  services:
+    - docker:dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker push $IMAGE_TAG
+  only:
+    - main
 
 deploy:
   image: ilyasemenov/gitlab-ci-git-push
