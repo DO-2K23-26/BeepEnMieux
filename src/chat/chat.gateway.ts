@@ -6,6 +6,7 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   WsException,
+  ConnectedSocket,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import {
@@ -19,6 +20,7 @@ import { GroupeService } from 'src/groupe/groupe.service';
 import { AuthService } from 'src/auth/auth.service';
 import { MessageService } from 'src/message/message.service';
 import { CreateMessageDto } from 'src/message/dto/create-message.dto';
+import { ifError } from 'assert';
 
 @WebSocketGateway({
   cors: {
@@ -40,30 +42,51 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('chat')
   async handleChatEvent(
-    @MessageBody()
-    payload: any,
+    @MessageBody() data: Promise<{contenu: String, timestamp: number}>,
+    @ConnectedSocket() client: Socket,
   ): Promise<Message> {
-    const groupe = await this.groupeService.findByName(payload.groupe);
-    const author = await this.userService.findByEmail(payload.author);
-    console.log(payload);
+    const token = client.handshake.auth.token;
+    const author = (await this.authService.infoUser(token))?.user;
+    let iterateur = client.rooms.keys();
+    iterateur.next();
+    const groupeName = iterateur.next().value;
+    const groupe = await this.groupeService.findByName(groupeName);
     if(!groupe || !author) {
       throw new WsException('Invalid groupe or author');
     }
-    payload.author = author;
-    payload.groupe = groupe;
-    this.server.to((await groupe).nom).emit('chat', payload); // broadcast messages
-    this.messageService.create(payload);
-    this.logger.log(`Message sent to ${(await groupe).nom}`);
-    return payload;
+    this.server.to(groupe.nom).emit('chat', data); // broadcast messages
+    const message: any = {
+      contenu: (await data).contenu,
+      author: author,
+      groupe: groupe,
+      timestamp: (await data).timestamp,
+    };
+    this.messageService.create(message);
+    this.logger.log(`Message sent to ${groupe.nom}`);
+    return message;
   }
 
   @SubscribeMessage('join_room')
   async handleSetClientDataEvent(
     client: Socket, data: string
-  ) {
+    ) {
+
+    //leave all rooms except current room
+    const groupes = await this.userService.findGroupesByUserSocketId(client.id);
+    for (const groupe of groupes) {
+      client.leave(groupe.nom);
+    }
+
+    //verify user and groupe
     const token = client.handshake.auth.token;
     const user = (await this.authService.infoUser(token))?.user;
     const groupe = await this.groupeService.findByName(data);
+    //exception if user or groupe is invalid
+    if(!user || !groupe) {
+      throw new WsException('Invalid user or groupe');
+    }
+
+    //join room
     if (user.socketId) {
       this.logger.log(
         `${user.socketId} is joining ${groupe.nom}`,
@@ -81,11 +104,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.disconnect();
       return;
     }
-    const groupes = await this.userService.findGroupesByUserSocketId(socket.id);
     await this.userService.addSocketId(user, socket.id);
-    for (const groupe of groupes) {
-      socket.join(groupe.nom);
-    }
     this.logger.log(`Socket connected: ${socket.id}`);
   }
 

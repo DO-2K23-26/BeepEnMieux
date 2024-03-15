@@ -8,16 +8,16 @@ export class UsersService {
   
   constructor(private readonly prisma: PrismaService) {}
   
-  findByEmail(author: string) {
-    return this.prisma.user.findFirst({ where: { email: author } });
+  async findByEmail(author: string) {
+    return await this.prisma.user.findFirst({ where: { email: author } });
   }
   
-  removeSocketId(id: string) {
+  async removeSocketId(id: string) {
     console.log("Removing socket id from user");
-    this.prisma.user.update({
+    await this.prisma.user.updateMany({
       where: { socketId: id },
       data: {
-        socketId: null,
+      socketId: null,
       },
     });
   }
@@ -102,13 +102,16 @@ export class UsersService {
   }
 
   async create(createUserDto: Prisma.UserCreateInput): Promise<Omit<User, 'password'> | null>{
-    const { email, password } = createUserDto;
+    const { email, nickname, password } = createUserDto;
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       throw new HttpException("User with email: " + email + " already exists", HttpStatus.NOT_FOUND);
     }
+    if (!email || !nickname || !password) {
+      throw new HttpException("Email, nickname and password are required", HttpStatus.BAD_REQUEST);
+    }
     return this.prisma.user.create({
-      data: { email, password },
+      data: { email, nickname, password },
     });
   }
 
