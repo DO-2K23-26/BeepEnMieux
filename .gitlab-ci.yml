@@ -11,10 +11,10 @@ before_script:
   - docker info
 
 Buid image:
-  image: docker:24.0.5
+  image: docker:latest
   stage: build
   services:
-    - docker:24.0.5-dind
+    - docker:dind
   script:
     - docker build -t $IMAGE_TAG .
 
