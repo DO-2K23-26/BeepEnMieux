@@ -6,6 +6,10 @@ import { Prisma } from '@prisma/client';
 export class GroupeService {
   constructor(private readonly prisma: PrismaService) {}
 
+  findByName(groupe: string) {
+    return this.prisma.groupe.findFirst({ where: { nom: groupe } });
+  }
+
   create(groupe: Prisma.GroupeCreateInput) {
     return this.prisma.groupe.create({ data: groupe });
   }
@@ -15,7 +19,7 @@ export class GroupeService {
   }
 
   async findOne(id: number) {
-    const groupe = await this.prisma.groupe.findUnique({ where: { id } });
+    const groupe = await this.prisma.groupe.findFirst({ where: { id } });
     if (!groupe) {
       throw new HttpException(`Groupe with id ${id} not found`, HttpStatus.NOT_FOUND);
     }
