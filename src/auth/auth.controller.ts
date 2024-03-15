@@ -1,6 +1,7 @@
 import { Controller, Request, Post, UseGuards, Body, HttpCode, HttpStatus, Get, Headers, NotAcceptableException, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
+import { User } from '@prisma/client';
 
 @Controller('auth')
 export class AuthController {
@@ -37,7 +38,7 @@ export class AuthController {
 
     @UseGuards(AuthGuard)
     @Get('@me')
-    async getProfile(@Headers('authorization') authorization: string): Promise<any> {
+    async getProfile(@Headers('authorization') authorization: string): Promise<Omit<User, 'password'>> {
         if (!authorization) {
             throw new NotAcceptableException('could not find the jwt token');
         }
