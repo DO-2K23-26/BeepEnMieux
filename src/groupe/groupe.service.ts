@@ -37,4 +37,13 @@ export class GroupeService {
   async addInGroupe(groupe: Groupe, user: User) {
     return await this.prisma.groupe.update({ where: { id: groupe.id }, data: { users: { connect: user } } });
   }
+
+  async addOrCreateGroupe(groupe: string, user: User) {
+    const groupeExist = await this.findByName(groupe);
+    if (groupeExist) {
+      return await this.prisma.groupe.update({ where: { id: groupeExist.id }, data: { users: { connect: user } } });
+    } else {
+      return await this.prisma.groupe.create({ data: { nom: groupe, users: { connect: user } } });
+    }
+  }
 }

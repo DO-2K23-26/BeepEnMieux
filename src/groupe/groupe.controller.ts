@@ -7,7 +7,8 @@ import {
   Patch,
   Post,
   Headers,
-  HttpException
+  HttpException,
+  HttpStatus
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { GroupeService } from './groupe.service';
@@ -45,6 +46,20 @@ export class GroupeController {
     }
     const groupe = await this.groupeService.findByName(id);
     return this.groupeService.addInGroupe(groupe, userProfile.user);
+  }
+
+  @Post('createAndJoin/:id')
+  async createAndJoin(@Param('id') id: string, @Headers('authorization') authorization: string) {
+    if(!authorization) {
+      throw new HttpException('Unauthorized', 401);
+    }
+    const token = authorization.split(' ')[1];
+    const userProfile = await this.authService.infoUser(token);
+    if(!userProfile) {
+      throw new HttpException('Unauthorized', 401);
+    }
+    await this.groupeService.addOrCreateGroupe(id, userProfile.user);
+    return HttpStatus.CREATED;
   }
 
   @Patch(':id')
