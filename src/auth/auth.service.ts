@@ -52,7 +52,6 @@ export class AuthService {
   async infoUser(jwtToken: string): Promise<{ message: string, user: User } | null> {
     const decodedToken = this.jwtService.decode(jwtToken);
     if(!decodedToken) return null;
-    console.log(decodedToken, jwtToken);
     const my_mail = await this.usersService.findOneByEmail(decodedToken.email);
     if (my_mail) {
       return {

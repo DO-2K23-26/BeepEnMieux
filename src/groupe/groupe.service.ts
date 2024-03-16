@@ -6,16 +6,16 @@ import { Prisma } from '@prisma/client';
 export class GroupeService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findByName(groupe: string) {
-    return this.prisma.groupe.findFirst({ where: { nom: groupe } });
+  async findByName(groupe: string) {
+    return await this.prisma.groupe.findFirst({ where: { nom: groupe } });
   }
 
-  create(groupe: Prisma.GroupeCreateInput) {
-    return this.prisma.groupe.create({ data: groupe });
+  async create(groupe: Prisma.GroupeCreateInput) {
+    return await this.prisma.groupe.create({ data: groupe });
   }
 
-  findAll() {
-    return this.prisma.groupe.findMany();
+  async findAll() {
+    return await this.prisma.groupe.findMany();
   }
 
   async findOne(id: number) {
@@ -27,10 +27,10 @@ export class GroupeService {
   }
 
   async update(id: number, groupe: Prisma.GroupeUpdateInput) {
-    return this.prisma.groupe.update({ where: { id }, data: groupe });
+    return await this.prisma.groupe.update({ where: { id }, data: groupe });
   }
 
   async remove(id: number) {
-    return this.prisma.groupe.delete({ where: { id } });
+    return await this.prisma.groupe.delete({ where: { id } });
   }
 }

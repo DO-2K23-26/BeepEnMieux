@@ -11,7 +11,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(@Headers('authorization') authorization: string){
     const payload = authorization.replace('Bearer ', '');
-    console.log(payload);
     
     const user = await this.authService.infoUser(payload);
     if (!user) {

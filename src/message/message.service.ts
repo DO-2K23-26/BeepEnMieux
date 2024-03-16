@@ -39,7 +39,28 @@ export class MessageService {
     return this.prisma.message.delete({ where: { id } });
   }
   
-  findAllByGroup(id: number) {
-    return this.prisma.message.findMany({ where: { groupeId: Number(id) } });
+  async findAllByGroup(nom: string) {
+    const groupe = await this.prisma.groupe.findUnique({ where: { nom } });
+    return this.prisma.message.findMany({ 
+      where: { groupeId: groupe.id },
+    orderBy: { timestamp: 'asc' },
+    select: {
+      id: false,
+      contenu: true,
+      timestamp: true,
+      authorId: true,
+      groupeId: false,
+    }
+    })
+    .then(messages => Promise.all(messages.map(async message => { 
+      const author = await this.prisma.user.findUnique({ where: { id: message.authorId } });
+      return (
+        {
+        contenu: message.contenu,
+        timestamp: message.timestamp.toString(),
+        author: author.nickname
+        }
+      )
+    })));
   }
 }

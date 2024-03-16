@@ -6,6 +6,7 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   WsException,
+  ConnectedSocket,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import {
@@ -18,7 +19,6 @@ import { Message } from '@prisma/client';
 import { GroupeService } from 'src/groupe/groupe.service';
 import { AuthService } from 'src/auth/auth.service';
 import { MessageService } from 'src/message/message.service';
-import { CreateMessageDto } from 'src/message/dto/create-message.dto';
 
 @WebSocketGateway({
   cors: {
@@ -40,36 +40,69 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('chat')
   async handleChatEvent(
-    @MessageBody()
-    payload: any,
+    @MessageBody() data: Promise<{contenu: string, timestamp: number}>,
+    @ConnectedSocket() client: Socket,
   ): Promise<Message> {
-    const groupe = await this.groupeService.findByName(payload.groupe);
-    const author = await this.userService.findByEmail(payload.author);
-    console.log(payload);
+    const token = client.handshake.auth.token;
+    const author = (await this.authService.infoUser(token))?.user;
+    let iterateur = client.rooms.keys();
+    iterateur.next();
+    const groupeName = iterateur.next().value;
+    const groupe = await this.groupeService.findByName(groupeName);
     if(!groupe || !author) {
+      this.logger.log(`Invalid groupe or author`);
       throw new WsException('Invalid groupe or author');
     }
-    payload.author = author;
-    payload.groupe = groupe;
-    this.server.to((await groupe).nom).emit('chat', payload); // broadcast messages
-    this.messageService.create(payload);
-    this.logger.log(`Message sent to ${(await groupe).nom}`);
-    return payload;
+    const retour = {
+      contenu: (await data).contenu,
+      timestamp: (await data).timestamp,
+      author: author.nickname,
+    }
+    this.server.to(groupe.nom).emit('chat', retour); // broadcast messages
+    const message: any = {
+      contenu: (await data).contenu,
+      author: author,
+      groupe: groupe,
+      timestamp: (await data).timestamp,
+    };
+    this.messageService.create(message);
+    this.logger.log(`Message sent to ${groupe.nom}`);
+    return message;
   }
 
   @SubscribeMessage('join_room')
   async handleSetClientDataEvent(
-    @MessageBody()
-    payload: Message,
-  ) {
-    const author = (await this.userService.findOneById(payload.authorId)).user;
-    const groupe = (await this.groupeService.findOne(payload.groupeId));
-    if (author.socketId) {
+    client: Socket, data: string
+    ) {
+    console.log('join_room');
+    //leave all rooms
+    const groupes = await this.userService.findGroupesByUserSocketId(client.id);
+    const groupesNames = groupes.map(groupe => groupe.nom);
+    for (const groupe of groupesNames) {
+      client.leave(groupe);
+    }
+
+    //verify user and groupe
+    const token = client.handshake.auth.token;
+    const user = (await this.authService.infoUser(token))?.user;
+    const groupe = await this.groupeService.findByName(data);
+    const groupeName = groupe.nom;
+    //exception if user or groupe is invalid
+    if(!user || !groupe) {
+      throw new WsException('Invalid user or groupe');
+    }
+
+    if(!groupesNames.includes(groupeName)) {
+      console.log('User not in groupe');
+      throw new WsException('User not in groupe');
+    }
+
+    //join room
+    if (user.socketId) {
       this.logger.log(
-        `${author.socketId} is joining ${groupe.nom}`,
+        `${user.socketId} is joining ${groupe.nom}`,
       );
-      this.server.in(author.socketId).socketsJoin(groupe.nom);
-      this.userService.addUserToGroupe(groupe.nom, author);
+      client.join(groupe.nom);
     }
   }
 
@@ -81,11 +114,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.disconnect();
       return;
     }
-    const groupes = await this.userService.findGroupesByUserSocketId(socket.id);
-    this.userService.addSocketId(user, socket.id);
-    for (const groupe of groupes) {
-      socket.join(groupe.nom);
-    }
+    await this.userService.addSocketId(user, socket.id);
     this.logger.log(`Socket connected: ${socket.id}`);
   }
 
