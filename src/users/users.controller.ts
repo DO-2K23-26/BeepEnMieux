@@ -51,6 +51,11 @@ export class UsersController {
     return user;
   }
 
+  @Get('getGroupes/:id')
+  async findGroupesByUserId(@Param('id') id: string) {
+    return this.usersService.findGroupesByUserId(Number(id));
+  }
+
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     const saltOrRounds = 10;

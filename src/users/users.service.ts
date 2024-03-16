@@ -1,26 +1,30 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Groupe, Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  
   constructor(private readonly prisma: PrismaService) {}
-  
+
   async findByEmail(author: string) {
     return await this.prisma.user.findFirst({ where: { email: author } });
   }
-  
+
   async removeSocketId(id: string) {
     await this.prisma.user.updateMany({
       where: { socketId: id },
       data: {
-      socketId: null,
+        socketId: null,
       },
     });
   }
-  
+
   async addSocketId(user: User, id: string) {
     await this.prisma.user.update({
       where: { id: user.id },
@@ -30,17 +34,18 @@ export class UsersService {
     });
   }
 
-
-  async findOneById(id: number): Promise<{message: string, user: User | null}> {
-    const my_user = await this.prisma.user.findUnique({where: { id }});
+  async findOneById(
+    id: number,
+  ): Promise<{ message: string; user: User | null }> {
+    const my_user = await this.prisma.user.findUnique({ where: { id } });
     if (my_user) {
       return {
-        message: "User id: " + id + " found",
-        user: my_user};
+        message: 'User id: ' + id + ' found',
+        user: my_user,
+      };
     } else {
       return null;
     }
-     
   }
 
   async findOneByEmail(email: string): Promise<User | null> {
@@ -67,6 +72,18 @@ export class UsersService {
         users: {
           some: {
             socketId,
+          },
+        },
+      },
+    });
+  }
+
+  async findGroupesByUserId(id: number): Promise<Groupe[]> {
+    return this.prisma.groupe.findMany({
+      where: {
+        users: {
+          some: {
+            id,
           },
         },
       },
