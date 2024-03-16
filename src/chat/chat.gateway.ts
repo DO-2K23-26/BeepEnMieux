@@ -75,19 +75,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client: Socket, data: string
     ) {
     console.log('join_room');
-    //leave all rooms except current room
+    //leave all rooms
     const groupes = await this.userService.findGroupesByUserSocketId(client.id);
-    for (const groupe of groupes) {
-      client.leave(groupe.nom);
+    const groupesNames = groupes.map(groupe => groupe.nom);
+    for (const groupe of groupesNames) {
+      client.leave(groupe);
     }
 
     //verify user and groupe
     const token = client.handshake.auth.token;
     const user = (await this.authService.infoUser(token))?.user;
     const groupe = await this.groupeService.findByName(data);
+    const groupeName = groupe.nom;
     //exception if user or groupe is invalid
     if(!user || !groupe) {
       throw new WsException('Invalid user or groupe');
+    }
+
+    if(!groupesNames.includes(groupeName)) {
+      console.log('User not in groupe');
+      throw new WsException('User not in groupe');
     }
 
     //join room
@@ -95,8 +102,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.log(
         `${user.socketId} is joining ${groupe.nom}`,
       );
-      this.server.in(user.socketId).socketsJoin(groupe.nom);
-      await this.userService.addUserToGroupe(groupe.nom, user);
+      client.join(groupe.nom);
     }
   }
 
