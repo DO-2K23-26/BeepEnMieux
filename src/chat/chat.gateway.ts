@@ -45,14 +45,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<Message> {
     const token = client.handshake.auth.token;
     const author = (await this.authService.infoUser(token))?.user;
-    let iterateur = client.rooms.keys();
-    iterateur.next();
-    const groupeName = iterateur.next().value;
-    const groupe = await this.groupeService.findByName(groupeName);
-    if(!groupe || !author) {
-      this.logger.log(`Invalid groupe or author`);
-      throw new WsException('Invalid groupe or author');
+    if(!author) {
+      this.logger.log(`Invalid author`);
+      throw new WsException('Invalid author');
     }
+    const groupeName = Array.from(client.rooms)[1];
+    if (!groupeName) {
+      this.logger.log(`Client is not in a room`);
+      throw new WsException('Client is not in a room');
+    }
+    const groupe = await this.groupeService.findByName(groupeName);
     const retour = {
       contenu: (await data).contenu,
       timestamp: (await data).timestamp,
