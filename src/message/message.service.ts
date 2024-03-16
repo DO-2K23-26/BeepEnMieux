@@ -43,11 +43,24 @@ export class MessageService {
     const groupe = await this.prisma.groupe.findUnique({ where: { nom } });
     return this.prisma.message.findMany({ 
       where: { groupeId: groupe.id },
-      orderBy: { timestamp: 'asc' } 
+    orderBy: { timestamp: 'asc' },
+    select: {
+      id: false,
+      contenu: true,
+      timestamp: true,
+      authorId: true,
+      groupeId: false,
+    }
     })
-    .then(messages => messages.map(message => ({
-      ...message,
-      timestamp: message.timestamp.toString(),
+    .then(messages => Promise.all(messages.map(async message => { 
+      const author = await this.prisma.user.findUnique({ where: { id: message.authorId } });
+      return (
+        {
+        contenu: message.contenu,
+        timestamp: message.timestamp.toString(),
+        author: author.nickname
+        }
+      )
     })));
   }
 }
