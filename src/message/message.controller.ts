@@ -6,14 +6,22 @@ import {
   Patch,
   Param,
   Delete,
+  Headers,
+  HttpException,
 } from '@nestjs/common';
 import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
+import { AuthService } from 'src/auth/auth.service';
+import { UsersService } from 'src/users/users.service';
+import { GroupeService } from 'src/groupe/groupe.service';
 
 @Controller('message')
 export class MessageController {
-  constructor(private readonly messageService: MessageService) {}
+  constructor(private readonly messageService: MessageService, 
+    private readonly authService: AuthService,
+    private readonly userService: UsersService,
+    private readonly groupeService: GroupeService) {}
 
   @Post()
   create(@Body() createMessageDto: CreateMessageDto) {
@@ -26,7 +34,16 @@ export class MessageController {
   }
 
   @Get('groupe/:id')
-  findAllByGroup(@Param('id') id: string) {
+  async findAllByGroup(@Param('id') id: string, @Headers('authorization') authorization: string) {
+    if(!authorization) {
+      throw new HttpException('Unauthorized', 401);
+    }
+    const token = authorization.split(' ')[1];
+    const userProfile = await this.authService.infoUser(token);
+    const groupe = await this.groupeService.findByName(id);
+    if (await this.userService.isInGroupe(userProfile.user, groupe) === false) {
+      throw new HttpException('Unauthorized', 401);
+    }
     return this.messageService.findAllByGroup(id);
   }
 
