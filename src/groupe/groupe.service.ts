@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Groupe, Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class GroupeService {
@@ -32,5 +32,9 @@ export class GroupeService {
 
   async remove(id: number) {
     return await this.prisma.groupe.delete({ where: { id } });
+  }
+
+  async addInGroupe(groupe: Groupe, user: User) {
+    return await this.prisma.groupe.update({ where: { id: groupe.id }, data: { users: { connect: user } } });
   }
 }
