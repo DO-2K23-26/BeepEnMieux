@@ -39,11 +39,15 @@ export class MessageService {
     return this.prisma.message.delete({ where: { id } });
   }
   
-  findAllByGroup(id: number) {
-    return this.prisma.message.findMany({ where: { groupeId: Number(id) } })
+  async findAllByGroup(nom: string) {
+    const groupe = await this.prisma.groupe.findUnique({ where: { nom } });
+    return this.prisma.message.findMany({ 
+      where: { groupeId: groupe.id },
+      orderBy: { timestamp: 'asc' } 
+    })
     .then(messages => messages.map(message => ({
-    ...message,
-    timestamp: message.timestamp.toString(),
+      ...message,
+      timestamp: message.timestamp.toString(),
     })));
   }
 }
