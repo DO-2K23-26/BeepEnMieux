@@ -53,7 +53,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.log(`Invalid groupe or author`);
       throw new WsException('Invalid groupe or author');
     }
-    this.server.to(groupe.nom).emit('chat', data); // broadcast messages
+    const retour = {
+      contenu: (await data).contenu,
+      timestamp: (await data).timestamp,
+      author: author.nickname,
+    }
+    this.server.to(groupe.nom).emit('chat', retour); // broadcast messages
     const message: any = {
       contenu: (await data).contenu,
       author: author,
