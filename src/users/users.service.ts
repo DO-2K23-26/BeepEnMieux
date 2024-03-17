@@ -172,6 +172,9 @@ export class UsersService {
   }
 
   async isInGroupe(user: User, groupe: Groupe): Promise<boolean> {
+    if (!user || !groupe) {
+      return false;
+    }
     const groupes = await this.prisma.user.findUnique({ where: { id: user.id } }).groupes();
     return groupes.some((g) => g.id === groupe.id);
   }

@@ -34,6 +34,10 @@ export class MessageService {
     ): Promise<Message> {
       return this.prisma.message.update({ where: { id }, data: message });
   }
+
+  async updateContenu(id: number, contenu: string): Promise<Message> {
+    return this.prisma.message.update({ where: { id }, data: { contenu } });
+  }
     
   async remove(id: number): Promise<Message | null> {
     return this.prisma.message.delete({ where: { id } });
@@ -45,7 +49,7 @@ export class MessageService {
       where: { groupeId: groupe.id },
     orderBy: { timestamp: 'asc' },
     select: {
-      id: false,
+      id: true,
       contenu: true,
       timestamp: true,
       authorId: true,
@@ -58,7 +62,8 @@ export class MessageService {
         {
         contenu: message.contenu,
         timestamp: message.timestamp.toString(),
-        author: author.nickname
+        author: author.nickname,
+        id: message.id
         }
       )
     })));
