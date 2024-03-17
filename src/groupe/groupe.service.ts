@@ -21,9 +21,24 @@ export class GroupeService {
   async findOne(id: number) {
     const groupe = await this.prisma.groupe.findFirst({ where: { id } });
     if (!groupe) {
-      throw new HttpException(`Groupe with id ${id} not found`, HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        `Groupe with id ${id} not found`,
+        HttpStatus.NOT_FOUND,
+      );
     }
     return groupe;
+  }
+
+  async findGroupesByUserId(id: number): Promise<Groupe[]> {
+    return this.prisma.groupe.findMany({
+      where: {
+        users: {
+          some: {
+            id,
+          },
+        },
+      },
+    });
   }
 
   async update(id: number, groupe: Prisma.GroupeUpdateInput) {
@@ -35,15 +50,23 @@ export class GroupeService {
   }
 
   async addInGroupe(groupe: Groupe, user: User) {
-    return await this.prisma.groupe.update({ where: { id: groupe.id }, data: { users: { connect: user } } });
+    return await this.prisma.groupe.update({
+      where: { id: groupe.id },
+      data: { users: { connect: user } },
+    });
   }
 
   async addOrCreateGroupe(groupe: string, user: User) {
     const groupeExist = await this.findByName(groupe);
     if (groupeExist) {
-      return await this.prisma.groupe.update({ where: { id: groupeExist.id }, data: { users: { connect: user } } });
+      return await this.prisma.groupe.update({
+        where: { id: groupeExist.id },
+        data: { users: { connect: user } },
+      });
     } else {
-      return await this.prisma.groupe.create({ data: { nom: groupe, users: { connect: user } } });
+      return await this.prisma.groupe.create({
+        data: { nom: groupe, users: { connect: user } },
+      });
     }
   }
 }
