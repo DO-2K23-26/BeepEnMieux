@@ -31,7 +31,7 @@ export class AuthService {
     if (!user) {
       throw new NotAcceptableException('Invalid email or password');
     }
-    const payload = { email: user.email, nikname: user.nikname, sub: user._id };
+    const payload = { email: user.email, nickname: user.nickname, sub: user._id };
     return {
       access_token: this.jwtService.sign(payload, { expiresIn: '5m' }),
     };
@@ -43,7 +43,7 @@ export class AuthService {
 
   async refreshToken(user: any) {
     const tokenId = uuid();
-    const payload = { email: user.email, nikname: user.nikname, sub: user._id, tokenId: tokenId};
+    const payload = { email: user.email, nickname: user.nickname, sub: user._id, tokenId: tokenId};
     return {
       refresh_token: this.jwtService.sign(payload, { expiresIn: '15m' }),
     };
