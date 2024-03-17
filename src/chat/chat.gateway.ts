@@ -55,19 +55,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       throw new WsException('Client is not in a room');
     }
     const groupe = await this.groupeService.findByName(groupeName);
-    const retour = {
+    let retour = {
       contenu: (await data).contenu,
       timestamp: (await data).timestamp,
       author: author.nickname,
+      id: null,
     }
-    this.server.to(groupe.nom).emit('chat', retour); // broadcast messages
     const message: any = {
       contenu: (await data).contenu,
       author: author,
       groupe: groupe,
+      
       timestamp: (await data).timestamp,
     };
-    this.messageService.create(message);
+    const messageStocked = await this.messageService.create(message);
+    retour.id = messageStocked.id;
+    this.server.to(groupe.nom).emit('chat', retour); // broadcast messages
     this.logger.log(`Message sent to ${groupe.nom}`);
     return message;
   }
