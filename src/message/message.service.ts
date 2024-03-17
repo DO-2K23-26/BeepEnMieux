@@ -34,6 +34,10 @@ export class MessageService {
     ): Promise<Message> {
       return this.prisma.message.update({ where: { id }, data: message });
   }
+
+  async updateContenu(id: number, contenu: string): Promise<Message> {
+    return this.prisma.message.update({ where: { id }, data: { contenu } });
+  }
     
   async remove(id: number): Promise<Message | null> {
     return this.prisma.message.delete({ where: { id } });
