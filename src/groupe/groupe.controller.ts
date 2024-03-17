@@ -8,7 +8,7 @@ import {
   Post,
   Headers,
   HttpException,
-  HttpStatus
+  HttpStatus,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { GroupeService } from './groupe.service';
@@ -16,8 +16,10 @@ import { AuthService } from 'src/auth/auth.service';
 
 @Controller('groupe')
 export class GroupeController {
-  constructor(private readonly groupeService: GroupeService,
-    private readonly authService: AuthService) {}
+  constructor(
+    private readonly groupeService: GroupeService,
+    private readonly authService: AuthService,
+  ) {}
 
   @Post()
   create(@Body() groupe: Prisma.GroupeCreateInput) {
@@ -34,14 +36,27 @@ export class GroupeController {
     return this.groupeService.findOne(Number(id));
   }
 
-  @Post('join/:id')
-  async join(@Param('id') id: string, @Headers('authorization') authorization: string) {
-    if(!authorization) {
+  @Get('getGroupes/')
+  async findGroupesByUserId(@Headers('authorization') authorization: string) {
+    if (!authorization) {
       throw new HttpException('Unauthorized', 401);
     }
     const token = authorization.split(' ')[1];
     const userProfile = await this.authService.infoUser(token);
-    if(!userProfile) {
+    return this.groupeService.findGroupesByUserId(userProfile.user.id);
+  }
+
+  @Post('join/:id')
+  async join(
+    @Param('id') id: string,
+    @Headers('authorization') authorization: string,
+  ) {
+    if (!authorization) {
+      throw new HttpException('Unauthorized', 401);
+    }
+    const token = authorization.split(' ')[1];
+    const userProfile = await this.authService.infoUser(token);
+    if (!userProfile) {
       throw new HttpException('Unauthorized', 401);
     }
     const groupe = await this.groupeService.findByName(id);
@@ -49,13 +64,16 @@ export class GroupeController {
   }
 
   @Post('createAndJoin/:id')
-  async createAndJoin(@Param('id') id: string, @Headers('authorization') authorization: string) {
-    if(!authorization) {
+  async createAndJoin(
+    @Param('id') id: string,
+    @Headers('authorization') authorization: string,
+  ) {
+    if (!authorization) {
       throw new HttpException('Unauthorized', 401);
     }
     const token = authorization.split(' ')[1];
     const userProfile = await this.authService.infoUser(token);
-    if(!userProfile) {
+    if (!userProfile) {
       throw new HttpException('Unauthorized', 401);
     }
     await this.groupeService.addOrCreateGroupe(id, userProfile.user);
