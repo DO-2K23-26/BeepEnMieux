@@ -1,21 +1,20 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  Headers,
+  Get,
   HttpException,
+  Param,
+  Patch,
+  Post,
   Req,
 } from '@nestjs/common';
-import { MessageService } from './message.service';
+import { AuthService } from 'src/auth/auth.service';
+import { GroupeService } from 'src/groupe/groupe.service';
+import { UsersService } from 'src/users/users.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
-import { AuthService } from 'src/auth/auth.service';
-import { UsersService } from 'src/users/users.service';
-import { GroupeService } from 'src/groupe/groupe.service';
+import { MessageService } from './message.service';
 
 @Controller('message')
 export class MessageController {
