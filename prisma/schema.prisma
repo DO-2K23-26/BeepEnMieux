@@ -14,25 +14,27 @@ datasource db {
 }
 
 model User {
-  id               Int       @id @default(autoincrement())
-  email            String    @unique
-  nickname         String    @unique
+  id               Int        @id @default(autoincrement())
+  email            String     @unique
+  nickname         String     @unique
   password         String
-  socketId         String?   @unique
+  socketId         String?    @unique
   messages         Message[]
-  groupes          Groupe[]  @relation("usersGroupe")
-  groupesSuperUser Groupe[]  @relation("superUsersGroupe")
+  groupes          Groupe[]   @relation("usersGroupe")
+  groupesSuperUser Groupe[]   @relation("superUsersGroupe")
   Groupe           Groupe[]
+  TimedOut         TimedOut[]
 }
 
 model Groupe {
-  id         Int       @id @default(autoincrement())
-  nom        String    @unique
+  id         Int        @id @default(autoincrement())
+  nom        String     @unique
   messages   Message[]
-  users      User[]    @relation("usersGroupe")
-  owner      User      @relation(fields: [ownerId], references: [id])
+  users      User[]     @relation("usersGroupe")
+  owner      User       @relation(fields: [ownerId], references: [id])
   ownerId    Int
-  superUsers User[]    @relation("superUsersGroupe")
+  superUsers User[]     @relation("superUsersGroupe")
+  TimedOut   TimedOut[]
 }
 
 model Message {
@@ -43,4 +45,15 @@ model Message {
   groupe    Groupe @relation(fields: [groupeId], references: [id])
   groupeId  Int
   timestamp BigInt
+}
+
+model TimedOut {
+  id      Int      @id @default(autoincrement())
+  userId  Int
+  groupId Int
+  date    DateTime @default(now())
+  reason  String
+  time    String
+  user    User     @relation(fields: [userId], references: [id])
+  group   Groupe   @relation(fields: [groupId], references: [id])
 }
