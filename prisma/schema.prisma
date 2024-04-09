@@ -53,7 +53,7 @@ model TimedOut {
   groupId Int
   date    DateTime @default(now())
   reason  String
-  time    BigInt
+  time    String
   user    User     @relation(fields: [userId], references: [id])
   group   Groupe   @relation(fields: [groupId], references: [id])
 }
