@@ -43,7 +43,7 @@ export class GroupeService {
     if (groupeExist) {
       return await this.prisma.groupe.update({ where: { id: groupeExist.id }, data: { users: { connect: user } } });
     } else {
-      return await this.prisma.groupe.create({ data: { nom: groupe, users: { connect: user } } });
+      return await this.prisma.groupe.create({ data: { nom: groupe, users: { connect: user }, ownerId : user.id } });
     }
   }
 }

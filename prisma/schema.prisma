@@ -14,31 +14,33 @@ datasource db {
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
-  email       String   @unique
-  nickname    String   @unique
-  password    String
-  socketId    String? @unique
-  messages    Message[]
-  groupes     Groupe[]
+  id               Int       @id @default(autoincrement())
+  email            String    @unique
+  nickname         String    @unique
+  password         String
+  socketId         String?   @unique
+  messages         Message[]
+  groupes          Groupe[]  @relation("usersGroupe")
+  groupesSuperUser Groupe[]  @relation("superUsersGroupe")
+  Groupe           Groupe[]
 }
 
 model Groupe {
-  id       Int    @id @default(autoincrement())
-  nom      String @unique
-  messages Message[]
-  users    User[]
-  owner   User    @relation(fields: [owner], references: [id])
-  ownerId   Int
-  superUsers User[]
+  id         Int       @id @default(autoincrement())
+  nom        String    @unique
+  messages   Message[]
+  users      User[]    @relation("usersGroupe")
+  owner      User      @relation(fields: [ownerId], references: [id])
+  ownerId    Int
+  superUsers User[]    @relation("superUsersGroupe")
 }
 
 model Message {
   id        Int    @id @default(autoincrement())
   contenu   String
-  author    User    @relation(fields: [authorId], references: [id])
+  author    User   @relation(fields: [authorId], references: [id])
   authorId  Int
-  groupe    Groupe  @relation(fields: [groupeId], references: [id])
+  groupe    Groupe @relation(fields: [groupeId], references: [id])
   groupeId  Int
   timestamp BigInt
 }
