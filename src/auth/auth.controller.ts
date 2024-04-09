@@ -2,11 +2,13 @@ import { Controller, Request, Post, UseGuards, Body, HttpCode, HttpStatus, Get, 
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
 import { User } from '@prisma/client';
+import { Public } from 'src/app.service';
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) { }
 
+    @Public()
     @HttpCode(HttpStatus.OK)
     @Post('login')
     async login(@Body() body, @Res() res) {
@@ -36,7 +38,6 @@ export class AuthController {
         return res.send(response);
     }
 
-    @UseGuards(AuthGuard)
     @Get('@me')
     async getProfile(@Headers('authorization') authorization: string): Promise<Omit<User, 'password'>> {
         if (!authorization) {

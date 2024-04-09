@@ -10,10 +10,6 @@ export class GroupeService {
     return await this.prisma.groupe.findFirst({ where: { nom: groupe } });
   }
 
-  async create(groupe: Prisma.GroupeCreateInput) {
-    return await this.prisma.groupe.create({ data: groupe });
-  }
-
   async findAll() {
     return await this.prisma.groupe.findMany();
   }
@@ -47,13 +43,6 @@ export class GroupeService {
 
   async remove(id: number) {
     return await this.prisma.groupe.delete({ where: { id } });
-  }
-
-  async addInGroupe(groupe: Groupe, user: User) {
-    return await this.prisma.groupe.update({
-      where: { id: groupe.id },
-      data: { users: { connect: user } },
-    });
   }
 
   async addOrCreateGroupe(groupe: string, user: User) {

@@ -15,6 +15,7 @@ import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
 // import { AuthService } from 'src/auth/auth.service';
 import { UsersService } from './users.service';
+import { Public } from 'src/app.service';
 @Controller('user')
 export class UsersController {
   constructor(
@@ -22,6 +23,7 @@ export class UsersController {
     // private readonly authService: AuthService,
   ) {}
 
+  @Public()
   @Post()
   async createUser(
     @Body('password') password: string,
