@@ -10,10 +10,6 @@ export class GroupeService {
     return await this.prisma.groupe.findFirst({ where: { nom: groupe } });
   }
 
-  async findAll() {
-    return await this.prisma.groupe.findMany();
-  }
-
   async findOne(id: number) {
     const groupe = await this.prisma.groupe.findFirst({ where: { id } });
     if (!groupe) {
