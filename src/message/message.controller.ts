@@ -8,6 +8,7 @@ import {
   Delete,
   Headers,
   HttpException,
+  Req,
 } from '@nestjs/common';
 import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -36,8 +37,21 @@ export class MessageController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: number) {
-    return this.messageService.findOne(id);
+  async findOne(@Param('id') id: number, @Req() request: Request) {
+    // check if user is in groupe
+    const user = request['user'];
+    const message = await this.messageService.findOne(id);
+    const groupe = await this.groupeService.findGroupesById(message.groupeId);
+
+    if (!this.userService.isInGroupe(user, groupe)) {
+      throw new HttpException('Unauthorized', 401);
+    }
+
+    if (!message) {
+      throw new HttpException('Message not found', 404);
+    }
+
+    return message;
   }
 
   @Get('groupe/:id')

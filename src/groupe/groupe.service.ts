@@ -37,6 +37,10 @@ export class GroupeService {
     });
   }
 
+  async findGroupesById(id: number): Promise<Groupe> {
+    return this.prisma.groupe.findFirst({ where: { id } });
+  }
+
   async update(id: number, groupe: Prisma.GroupeUpdateInput) {
     return await this.prisma.groupe.update({ where: { id }, data: groupe });
   }
