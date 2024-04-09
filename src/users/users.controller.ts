@@ -6,14 +6,13 @@ import {
   HttpException,
   HttpStatus,
   Param,
-  Headers,
   Patch,
   Post,
+  Req,
 } from '@nestjs/common';
 import { User, Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
-// import { AuthService } from 'src/auth/auth.service';
 import { UsersService } from './users.service';
 import { Public } from 'src/app.service';
 @Controller('user')
@@ -41,31 +40,13 @@ export class UsersController {
     return result;
   }
 
-  @Get()
-  findAll() {
-    return this.usersService.findAll();
-  }
-
-  @Get(':id')
-  async findOneById(@Param('id') id: string) {
-    const user = await this.usersService.findOneById(Number(id));
-    if (!user) {
-      throw new HttpException(
-        'User id: ' + id + ' not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    user.user.password = null;
-    return user;
-  }
-
-  @Get('getGroupes/:id')
-  async findGroupesByUserId(@Param('id') id: string) {
-    return this.usersService.findGroupesByUserId(Number(id));
-  }
-
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto,
+  @Req() req: Request) {
+    const user = req['user'];
+    if (user.id !== Number(id)) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
     const saltOrRounds = 10;
     const hashedPassword = await bcrypt.hash(
       updateUserDto.password,
@@ -76,7 +57,12 @@ export class UsersController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: string,
+  @Req() req: Request){
+    const user = req['user'];
+    if (user.id !== Number(id)) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
     return this.usersService.remove(Number(id));
   }
 }
