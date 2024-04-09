@@ -15,6 +15,7 @@ import { UsersService } from 'src/users/users.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { MessageService } from './message.service';
+import { User } from '@prisma/client';
 
 @Controller('message')
 export class MessageController {
@@ -64,7 +65,22 @@ export class MessageController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: number, @Body() updateMessageDto: UpdateMessageDto) {
+  async update(
+    @Param('id') id: number,
+    @Body() updateMessageDto: UpdateMessageDto,
+    @Req() request: Request,
+  ) {
+    const user: User = request['user'];
+    const message = await this.messageService.findOne(id);
+
+    if (!message) {
+      throw new HttpException('Message not found', 404);
+    }
+
+    if (user.id !== message.authorId) {
+      throw new HttpException('Unauthorized', 401);
+    }
+
     const messageUpdateInput = {
       ...updateMessageDto,
       author: {
@@ -78,7 +94,18 @@ export class MessageController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: number) {
+  async remove(@Param('id') id: number, @Req() request: Request) {
+    const user: User = request['user'];
+    const message = await this.messageService.findOne(id);
+
+    if (!message) {
+      throw new HttpException('Message not found', 404);
+    }
+
+    if (user.id !== message.authorId) {
+      throw new HttpException('Unauthorized', 401);
+    }
+
     return this.messageService.remove(id);
   }
 }
