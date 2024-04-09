@@ -9,6 +9,10 @@ import {
   Headers,
   HttpException,
   HttpStatus,
+  UseGuards,
+  Request,
+  ExecutionContext,
+  Req,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { GroupeService } from './groupe.service';
@@ -20,11 +24,6 @@ export class GroupeController {
     private readonly groupeService: GroupeService,
     private readonly authService: AuthService,
   ) {}
-
-  @Post()
-  create(@Body() groupe: Prisma.GroupeCreateInput) {
-    return this.groupeService.create(groupe);
-  }
 
   @Get()
   findAll() {
@@ -60,23 +59,17 @@ export class GroupeController {
       throw new HttpException('Unauthorized', 401);
     }
     const groupe = await this.groupeService.findByName(id);
-    return this.groupeService.addInGroupe(groupe, userProfile.user);
+    return this.groupeService.addOrCreateGroupe(groupe.nom, userProfile.user);
   }
 
   @Post('createAndJoin/:id')
-  async createAndJoin(
-    @Param('id') id: string,
-    @Headers('authorization') authorization: string,
-  ) {
-    if (!authorization) {
-      throw new HttpException('Unauthorized', 401);
-    }
-    const token = authorization.split(' ')[1];
-    const userProfile = await this.authService.infoUser(token);
+  async createAndJoin(@Param('id') id: string, @Req() request: Request) {
+    const userProfile = request['user'];
+    console.log("Mon user :" + userProfile);
     if (!userProfile) {
       throw new HttpException('Unauthorized', 401);
     }
-    await this.groupeService.addOrCreateGroupe(id, userProfile.user);
+    await this.groupeService.addOrCreateGroupe(id, userProfile);
     return HttpStatus.CREATED;
   }
 
