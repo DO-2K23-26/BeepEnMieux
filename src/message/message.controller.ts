@@ -43,7 +43,7 @@ export class MessageController {
     const message = await this.messageService.findOne(id);
     const groupe = await this.groupeService.findGroupesById(message.groupeId);
 
-    if (!this.userService.isInGroupe(user, groupe)) {
+    if ((await this.userService.isInGroupe(user, groupe)) === false) {
       throw new HttpException('Unauthorized', 401);
     }
 
@@ -55,19 +55,10 @@ export class MessageController {
   }
 
   @Get('groupe/:id')
-  async findAllByGroup(
-    @Param('id') id: string,
-    @Headers('authorization') authorization: string,
-  ) {
-    if (!authorization) {
-      throw new HttpException('Unauthorized', 401);
-    }
-    const token = authorization.split(' ')[1];
-    const userProfile = await this.authService.infoUser(token);
+  async findAllByGroup(@Param('id') id: string, @Req() request: Request) {
+    const userProfile = request['user'];
     const groupe = await this.groupeService.findByName(id);
-    if (
-      (await this.userService.isInGroupe(userProfile.user, groupe)) === false
-    ) {
+    if ((await this.userService.isInGroupe(userProfile, groupe)) === false) {
       throw new HttpException('Unauthorized', 401);
     }
     return this.messageService.findAllByGroup(id);
