@@ -55,22 +55,56 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       throw new WsException('Client is not in a room');
     }
     const groupe = await this.groupeService.findByName(groupeName);
-    const retour = {
+    let retour = {
       contenu: (await data).contenu,
       timestamp: (await data).timestamp,
       author: author.nickname,
+      id: null,
     }
-    this.server.to(groupe.nom).emit('chat', retour); // broadcast messages
     const message: any = {
       contenu: (await data).contenu,
       author: author,
       groupe: groupe,
+      
       timestamp: (await data).timestamp,
     };
-    this.messageService.create(message);
+    const messageStocked = await this.messageService.create(message);
+    retour.id = messageStocked.id;
+    this.server.to(groupe.nom).emit('chat', retour); // broadcast messages
     this.logger.log(`Message sent to ${groupe.nom}`);
     return message;
   }
+
+  @SubscribeMessage('edit')
+  async handleEditEvent(
+    @MessageBody() data: Promise<{contenu: string, timestamp: number, id: number}>,
+    @ConnectedSocket() client: Socket,
+  ){
+    const token = client.handshake.auth.token;
+    const author = (await this.authService.infoUser(token))?.user;
+    if(!author) {
+      this.logger.log(`Invalid author`);
+      throw new WsException('Invalid author');
+    }
+    const groupeName = Array.from(client.rooms)[1];
+    if (!groupeName) {
+      this.logger.log(`Client is not in a room`);
+      throw new WsException('Client is not in a room');
+    }
+    const userId = (await this.messageService.findOne((await data).id)).authorId;
+    if (userId !== author.id) {
+      this.logger.log(`User is not the author`);
+      throw new WsException('User is not the author');
+    }
+    let retour = {
+      id: (await data).id,
+      contenu: (await data).contenu
+    }
+    const groupe = await this.groupeService.findByName(groupeName);
+    this.messageService.updateContenu((await data).id, (await data).contenu);
+    this.server.to(groupe.nom).emit('edit', retour); // broadcast messages
+  }
+      
 
   @SubscribeMessage('join_room')
   async handleSetClientDataEvent(
