@@ -28,6 +28,9 @@ model Groupe {
   nom      String @unique
   messages Message[]
   users    User[]
+  owner   User    @relation(fields: [owner], references: [id])
+  ownerId   Int
+  superUsers User[]
 }
 
 model Message {
