@@ -24,9 +24,6 @@ export class GroupeController {
   @Get()
   async findGroupesByUserId(@Req() request: Request) {
     const userProfile = request['user'];
-    if (!userProfile) {
-      throw new HttpException('Unauthorized', 401);
-    }
     return this.groupeService.findGroupesByUserId(userProfile.id);
   }
 
