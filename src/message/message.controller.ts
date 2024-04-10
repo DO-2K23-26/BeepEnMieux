@@ -31,11 +31,6 @@ export class MessageController {
     return this.messageService.create(createMessageDto);
   }
 
-  @Get()
-  findAll() {
-    return this.messageService.findAll();
-  }
-
   @Get(':id')
   async findOne(@Param('id') id: number, @Req() request: Request) {
     // check if user is in groupe
