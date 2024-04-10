@@ -58,11 +58,14 @@ export class GroupeController {
     @Param('name') groupeName: string,
     @Body('nickname') nickname: string)
   {
+    if (!nickname) {
+      throw new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
+    }
     const userProfile = request['user'];
-    if (!this.groupeService.isInGroupe(userProfile, groupeName)) {
+    if (!(await this.groupeService.isInGroupe(userProfile, groupeName))) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
-    if (!this.groupeService.isSuperUser(userProfile, groupeName) && !this.groupeService.isOwner(userProfile, groupeName)) {
+    if (!(await this.groupeService.isSuperUser(userProfile, groupeName)) && !(await this.groupeService.isOwner(userProfile, groupeName))) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
 

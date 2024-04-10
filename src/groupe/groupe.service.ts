@@ -54,13 +54,14 @@ export class GroupeService {
     if (!userProfile) {
       return false;
     }
-    
+
+    console.log(userProfile);
     return this.prisma.groupe.update({
       where: { nom: groupeName },
       data: {
-        superUsers: {
-          connect: userProfile,
-        },
+      superUsers: {
+        connect: { id: userProfile.id },
+      },
       },
     }).then((groupe) => {
       return !!groupe;
