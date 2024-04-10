@@ -33,8 +33,6 @@ export class GroupeController {
     const group = await this.groupeService.findByName(name);
     const users_draft = await this.groupeService.findUsersByGroupeId(group.id);
 
-    console.log(users_draft);
-
     // Check if the user is in the group
     let userInGroup = false;
     for (let i = 0; i < users_draft.length; i++) {
