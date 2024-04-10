@@ -10,7 +10,7 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
-import { Groupe, Prisma } from '@prisma/client';
+import { Groupe, Prisma, User } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { GroupeService } from './groupe.service';
 
@@ -27,15 +27,40 @@ export class GroupeController {
     return this.groupeService.findGroupesByUserId(userProfile.id);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    throw new HttpException('Not implemented', HttpStatus.NOT_IMPLEMENTED);
+  @Get(':name')
+  async findOne(@Param('name') name: string, @Req() request: Request) {
+    const userProfile: User = request['user'];
+    const group = await this.groupeService.findByName(name);
+    const users_draft = await this.groupeService.findUsersByGroupeId(group.id);
+
+    console.log(users_draft);
+
+    // Check if the user is in the group
+    let userInGroup = false;
+    for (let i = 0; i < users_draft.length; i++) {
+      if (users_draft[i].id == userProfile.id) {
+        userInGroup = true;
+      }
+    }
+    if (!userInGroup) {
+      throw new HttpException(
+        `User ${userProfile.nickname} is not in the group ${name}`,
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const users = this.groupeService.findGroupeUsersFormat(name);
+    return users;
   }
 
-  @Post(':id')
-  async createAndJoin(@Param('id') id: string, @Req() request: Request) {
+  @Post(':name')
+  async createAndJoin(@Param('name') name: string, @Req() request: Request) {
     const userProfile = request['user'];
-    const groupe: Groupe = await this.groupeService.addOrCreateGroupe(id, userProfile);
+
+    const groupe: Groupe = await this.groupeService.addOrCreateGroupe(
+      name,
+      userProfile,
+    );
     return groupe;
   }
 
@@ -56,8 +81,8 @@ export class GroupeController {
   async createSuperUserGroupe(
     @Req() request: Request,
     @Param('name') groupeName: string,
-    @Body('nickname') nickname: string)
-  {
+    @Body('nickname') nickname: string,
+  ) {
     if (!nickname) {
       throw new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
     }
@@ -65,7 +90,10 @@ export class GroupeController {
     if (!(await this.groupeService.isInGroupe(userProfile, groupeName))) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
-    if (!(await this.groupeService.isSuperUser(userProfile, groupeName)) && !(await this.groupeService.isOwner(userProfile, groupeName))) {
+    if (
+      !(await this.groupeService.isSuperUser(userProfile, groupeName)) &&
+      !(await this.groupeService.isOwner(userProfile, groupeName))
+    ) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
 

@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Groupe, Prisma, User } from '@prisma/client';
+import { Groupe, Prisma, TimedOut, User } from '@prisma/client';
 import { UsersService } from 'src/users/users.service';
 
 @Injectable()
@@ -83,6 +83,10 @@ export class GroupeService {
     return groupe;
   }
 
+  async findUsersByGroupeId(id: number) {
+    return this.prisma.groupe.findFirst({ where: { id } }).users();
+  }
+
   async findGroupesByUserId(id: number): Promise<Groupe[]> {
     return this.prisma.groupe.findMany({
       where: {
@@ -107,17 +111,91 @@ export class GroupeService {
     return await this.prisma.groupe.delete({ where: { id } });
   }
 
-  async addOrCreateGroupe(groupe: string, user: User) {
-    const groupeExist = await this.findByName(groupe);
+  async addOrCreateGroupe(name: string, user: User) {
+    // Check if the group already exists
+    const groupeExist = await this.findByName(name);
+
+    // If the group exists, add the user to the group else create the group
     if (groupeExist) {
+      const users = await this.findUsersByGroupeId(groupeExist.id);
+      // Check if the user is already in the group
+      for (let i = 0; i < users.length; i++) {
+        if (users[i].id === user.id) {
+          throw new HttpException(
+            'User already in the group',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+      }
       return await this.prisma.groupe.update({
         where: { id: groupeExist.id },
         data: { users: { connect: user } },
       });
     } else {
       return await this.prisma.groupe.create({
-        data: { nom: groupe, users: { connect: user }, ownerId: user.id },
+        data: { nom: name, users: { connect: user }, ownerId: user.id },
       });
     }
+  }
+
+  async findGroupeUsersFormat(groupe: string) {
+    // Get all users in the group
+    const users_draft = await this.prisma.groupe
+      .findUnique({ where: { nom: groupe } })
+      .users();
+    const users = users_draft.map((user) => user.nickname);
+
+    // Get owner of the group
+    const owner = (
+      await this.prisma.groupe.findUnique({ where: { nom: groupe } }).owner()
+    ).nickname;
+
+    // Get superUser of the group
+    const superUsers_draft = await this.prisma.groupe
+      .findUnique({ where: { nom: groupe } })
+      .superUsers();
+    const superUsers = superUsers_draft.map((user) => user.nickname);
+
+    // Get all timeOut users from the group and check if they are timeOut
+    const timeOutUsers = await this.prisma.timedOut
+      .findMany({
+        where: { groupId: (await this.findByName(groupe)).id },
+      })
+      .then((timeOutUsers: TimedOut[]) => {
+        return timeOutUsers.map((timeOutUser) => {
+          if (
+            timeOutUser.date.getTime() + Number(timeOutUser.time) <
+            Date.now()
+          ) {
+            return this.prisma.user.findUnique({
+              where: { id: timeOutUser.userId },
+            });
+          }
+        });
+      });
+
+    // Remove timeOut users from users
+    for (let i = 0; i < timeOutUsers.length; i++) {
+      const index = users.indexOf((await timeOutUsers[i]).nickname);
+      if (index > -1) {
+        users.splice(index, 1);
+      }
+    }
+
+    //remove owner from users
+    const index = users.indexOf(owner);
+    if (index > -1) {
+      users.splice(index, 1);
+    }
+
+    //remove superUsers from users
+    for (let i = 0; i < superUsers.length; i++) {
+      const index = users.indexOf(superUsers[i]);
+      if (index > -1) {
+        users.splice(index, 1);
+      }
+    }
+
+    return { owner, superUsers, users, timeOutUsers };
   }
 }
