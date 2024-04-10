@@ -256,4 +256,28 @@ export class GroupeService {
       },
     });
   }
+
+  async removeSuperUserGroupe(groupeName: string, nickname: string) {
+    const userProfile = await this.userService.findOneByNickname(nickname);
+    if (!userProfile) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (!(await this.isSuperUser(userProfile, groupeName))) {
+      throw new HttpException('User not super user', HttpStatus.NOT_FOUND);
+    }
+
+    return this.prisma.groupe
+      .update({
+        where: { nom: groupeName },
+        data: {
+          superUsers: {
+            disconnect: { id: userProfile.id },
+          },
+        },
+      })
+      .then((groupe) => {
+        return !!groupe;
+      });
+  }
 }
