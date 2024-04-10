@@ -35,9 +35,6 @@ export class GroupeController {
   @Post(':id')
   async createAndJoin(@Param('id') id: string, @Req() request: Request) {
     const userProfile = request['user'];
-    if (!userProfile) {
-      throw new HttpException('Unauthorized', 401);
-    }
     const groupe: Groupe = await this.groupeService.addOrCreateGroupe(id, userProfile);
     return groupe;
   }
@@ -53,5 +50,25 @@ export class GroupeController {
   @Delete(':id')
   remove(@Param('id') id: number) {
     return this.groupeService.remove(id);
+  }
+
+  @Post(':name/superuser')
+  async createSuperUserGroupe(
+    @Req() request: Request,
+    @Param('name') groupeName: string,
+    @Body('nickname') nickname: string)
+  {
+    if (!nickname) {
+      throw new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
+    }
+    const userProfile = request['user'];
+    if (!(await this.groupeService.isInGroupe(userProfile, groupeName))) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    if (!(await this.groupeService.isSuperUser(userProfile, groupeName)) && !(await this.groupeService.isOwner(userProfile, groupeName))) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.groupeService.createSuperUserGroupe(groupeName, nickname);
   }
 }
