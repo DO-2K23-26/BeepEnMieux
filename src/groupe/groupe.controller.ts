@@ -10,7 +10,7 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Groupe, Prisma } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { GroupeService } from './groupe.service';
 
@@ -41,8 +41,8 @@ export class GroupeController {
     if (!userProfile) {
       throw new HttpException('Unauthorized', 401);
     }
-    await this.groupeService.addOrCreateGroupe(id, userProfile);
-    return HttpStatus.CREATED;
+    const groupe: Groupe = await this.groupeService.addOrCreateGroupe(id, userProfile);
+    return groupe;
   }
 
   @Patch(':id')
