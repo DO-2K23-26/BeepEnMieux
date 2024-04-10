@@ -38,6 +38,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private logger = new Logger('ChatGateway');
 
+
   @SubscribeMessage('chat')
   async handleChatEvent(
     @MessageBody() data: Promise<{contenu: string, timestamp: number}>,
@@ -103,6 +104,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const groupe = await this.groupeService.findByName(groupeName);
     this.messageService.updateContenu((await data).id, (await data).contenu);
     this.server.to(groupe.nom).emit('edit', retour); // broadcast messages
+  }
+
+  @SubscribeMessage('delete')
+  async handleDeleteEvent(
+    @MessageBody() data: Promise<{id: number}>,
+    @ConnectedSocket() client: Socket,
+  ){
+    const token = client.handshake.auth.token;
+    const author = (await this.authService.infoUser(token))?.user;
+    if(!author) {
+      this.logger.log(`Invalid author`);
+      throw new WsException('Invalid author');
+    }
+    const groupeName = Array.from(client.rooms)[1];
+    if (!groupeName) {
+      this.logger.log(`Client is not in a room`);
+      throw new WsException('Client is not in a room');
+    }
+    const userId = (await this.messageService.findOne((await data).id)).authorId;
+    if (userId !== author.id) {
+      this.logger.log(`User is not the author`);
+      throw new WsException('User is not the author');
+    }
+    const groupe = await this.groupeService.findByName(groupeName);
+    this.messageService.remove((await data).id);
+    this.server.to(groupe.nom).emit('delete', (await data).id); // broadcast messages
   }
       
 
