@@ -1,10 +1,71 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Groupe, Prisma, User } from '@prisma/client';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class GroupeService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService,
+    private readonly userService: UsersService
+  ) {}
+
+  async isOwner(userProfile: User, groupeName: string) : Promise<boolean> {
+    return this.prisma.groupe.findFirst({
+      where: {
+        ownerId: userProfile.id,
+        nom: groupeName,
+      },
+    }).then((groupe) => {
+      return !!groupe;
+    });
+  }
+
+  async isSuperUser(userProfile: User, groupeName: string) : Promise<boolean> {
+    return this.prisma.groupe.findFirst({
+      where: {
+        superUsers: {
+          some: {
+            id: userProfile.id,
+          },
+        },
+        nom: groupeName,
+      },
+    }).then((groupe) => {
+      return !!groupe;
+    });
+  }
+
+  async isInGroupe(userProfile: any, groupeName: string) : Promise<boolean> {
+    return this.prisma.groupe.findFirst({
+      where: {
+        users: {
+          some: {
+            id: userProfile.id,
+          },
+        },
+        nom: groupeName,
+      },
+    }).then((groupe) => {
+      return !!groupe;
+    });
+  }
+  async createSuperUserGroupe(groupeName: string, nickname: string) : Promise<boolean> {
+    const userProfile = await this.userService.findOneByNickname(nickname);
+    if (!userProfile) {
+      return false;
+    }
+    
+    return this.prisma.groupe.update({
+      where: { nom: groupeName },
+      data: {
+        superUsers: {
+          connect: userProfile,
+        },
+      },
+    }).then((groupe) => {
+      return !!groupe;
+    });
+  }
 
   async findByName(groupe: string) {
     return await this.prisma.groupe.findFirst({ where: { nom: groupe } });
