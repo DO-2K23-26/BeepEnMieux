@@ -156,7 +156,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     if(!groupesNames.includes(groupeName)) {
-      console.log('User not in groupe');
       throw new WsException('User not in groupe');
     }
 
