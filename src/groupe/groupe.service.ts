@@ -10,10 +10,6 @@ export class GroupeService {
     return await this.prisma.groupe.findFirst({ where: { nom: groupe } });
   }
 
-  async findAll() {
-    return await this.prisma.groupe.findMany();
-  }
-
   async findOne(id: number) {
     const groupe = await this.prisma.groupe.findFirst({ where: { id } });
     if (!groupe) {
@@ -37,6 +33,10 @@ export class GroupeService {
     });
   }
 
+  async findGroupesById(id: number): Promise<Groupe> {
+    return this.prisma.groupe.findFirst({ where: { id } });
+  }
+
   async update(id: number, groupe: Prisma.GroupeUpdateInput) {
     return await this.prisma.groupe.update({ where: { id }, data: groupe });
   }
@@ -53,7 +53,9 @@ export class GroupeService {
         data: { users: { connect: user } },
       });
     } else {
-      return await this.prisma.groupe.create({ data: { nom: groupe, users: { connect: user }, ownerId : user.id } });
+      return await this.prisma.groupe.create({
+        data: { nom: groupe, users: { connect: user }, ownerId: user.id },
+      });
     }
   }
 }

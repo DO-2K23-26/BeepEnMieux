@@ -1,10 +1,6 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Groupe, Prisma, User } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -90,79 +86,124 @@ export class UsersService {
     });
   }
 
-  async removeUserFromAllGroupes(socketId: string): Promise<void> {
-    const groupes = await this.findGroupesByUserSocketId(socketId);
-    for (const groupe of groupes) {
-      this.prisma.groupe.update({
-        where: { nom: groupe.nom },
-        data: {
-          users: {
-            disconnect: { socketId: socketId },
-          },
-        },
-      });
-    }
-  }
-
-  async removeUserFromGroupe(socketId: string, groupe: string): Promise<void> {
-    this.prisma.groupe.update({
-      where: { nom: groupe },
-      data: {
-        users: {
-          disconnect: { socketId },
-        },
-      },
+  async create(
+    email: string,
+    nickname: string,
+    password: string,
+  ): Promise<Omit<User, 'password'> | null> {
+    // Check if user already exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
     });
-  }
-
-  async create(createUserDto: Prisma.UserCreateInput): Promise<Omit<User, 'password'> | null>{
-    const { email, nickname, password } = createUserDto;
-    const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      throw new HttpException("User with email: " + email + " already exists", HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'User with email: ' + email + ' already exists',
+        HttpStatus.NOT_FOUND,
+      );
     }
+
+    // Check if email, nickname and password are provided
     if (!email || !nickname || !password) {
-      throw new HttpException("Email, nickname and password are required", HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Email, nickname and password are required',
+        HttpStatus.BAD_REQUEST,
+      );
     }
-    return this.prisma.user.create({
-      data: { email, nickname, password },
+
+    // Hash the password
+    const saltOrRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltOrRounds);
+    const user: Prisma.UserCreateInput = {
+      email,
+      nickname,
+      password: hashedPassword,
+    };
+
+    const result = await this.prisma.user.create({
+      data: user,
     });
+
+    // Supprimer le mot de passe du résultat retourné
+    result.password = undefined;
+
+    return result;
   }
 
   async findAll() {
     const users = await this.prisma.user.findMany();
     for (const user of users) {
       user.password = undefined;
-    } 
+    }
     return users;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<Omit<User, 'password'> | null> {
+  async update(
+    id: number,
+    updateUserDto: UpdateUserDto,
+  ): Promise<Omit<User, 'password'> | null> {
+    // Vérifier si l'utilisateur existe
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
-      throw new HttpException("User id: " + id + " not found", HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'User id: ' + id + ' not found',
+        HttpStatus.NOT_FOUND,
+      );
     }
-    
-    // Exclure la propriété password de l'objet updateUserDto
-    const { password, ...data } = updateUserDto;
-  
-    // Mettre à jour l'utilisateur avec les données excluant le mot de passe
+
+    // Vérifier si l'email est déjà utilisé
+    if (updateUserDto.email) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: updateUserDto.email },
+      });
+      if (existingUser && existingUser.id !== id) {
+        throw new HttpException(
+          'User with email: ' + updateUserDto.email + ' already exists',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+    }
+
+    // Vérifier si le nickname est déjà utilisé
+    if (updateUserDto.nickname) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { nickname: updateUserDto.nickname },
+      });
+      if (existingUser && existingUser.id !== id) {
+        throw new HttpException(
+          'User with nickname: ' + updateUserDto.nickname + ' already exists',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+    }
+
+    // Vérifier si le mot de passe est fourni et le hasher
+    if (updateUserDto.password) {
+      const saltOrRounds = 10;
+      const hashedPassword = await bcrypt.hash(
+        updateUserDto.password,
+        saltOrRounds,
+      );
+      updateUserDto.password = hashedPassword;
+    }
+
+    // Mettre à jour l'utilisateur avec les données
     const updatedUser = await this.prisma.user.update({
       where: { id },
-      data,
+      data: updateUserDto,
     });
-  
+
     // Supprimer le mot de passe du résultat retourné
     updatedUser.password = undefined;
     return updatedUser;
   }
-  
-  
 
   async remove(id: number): Promise<Omit<User, 'password'> | null> {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
-      throw new HttpException("User id: " + id + " not found", HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'User id: ' + id + ' not found',
+        HttpStatus.NOT_FOUND,
+      );
     }
     const deleteUser = await this.prisma.user.delete({
       where: { id },
@@ -175,7 +216,9 @@ export class UsersService {
     if (!user || !groupe) {
       return false;
     }
-    const groupes = await this.prisma.user.findUnique({ where: { id: user.id } }).groupes();
+    const groupes = await this.prisma.user
+      .findUnique({ where: { id: user.id } })
+      .groupes();
     return groupes.some((g) => g.id === groupe.id);
   }
 }
