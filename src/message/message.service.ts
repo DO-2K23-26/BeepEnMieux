@@ -21,10 +21,6 @@ export class MessageService {
     });
   }
 
-  async findAll(): Promise<Message[]> {
-    return this.prisma.message.findMany();
-  }
-
   async findOne(id: number): Promise<Message | null> {
     return this.prisma.message.findUnique({ where: { id } });
   }
