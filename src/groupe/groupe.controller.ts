@@ -86,6 +86,24 @@ export class GroupeController {
     return this.groupeService.createSuperUserGroupe(groupeName, nickname);
   }
 
+  @Delete(':name/superuser')
+  async removeSuperUserGroupe(
+    @Req() request: Request,
+    @Param('name') groupeName: string,
+    @Body('nickname') nickname: string,
+  ) {
+    if (!nickname) {
+      throw new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
+    }
+    // Check if the user have the right
+    const userProfile = request['user'];
+    if (!(await this.groupeService.isOwner(userProfile, groupeName))) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.groupeService.removeSuperUserGroupe(groupeName, nickname);
+  }
+
   @Post(':name/timeout')
   async TimeoutUser(
     @Req() request: Request,
