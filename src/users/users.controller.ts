@@ -10,10 +10,9 @@ import {
   Req,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { Public } from 'src/app.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
-import { Public } from 'src/app.service';
 @Controller('user')
 export class UsersController {
   constructor(
@@ -32,23 +31,10 @@ export class UsersController {
     return user;
   }
 
-  @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
-    @Req() req: Request,
-  ) {
-    const user = req['user'];
-    if (user.id !== Number(id)) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
-    const saltOrRounds = 10;
-    const hashedPassword = await bcrypt.hash(
-      updateUserDto.password,
-      saltOrRounds,
-    );
-    updateUserDto.password = hashedPassword;
-    return this.usersService.update(Number(id), updateUserDto);
+  @Patch()
+  async update(@Body() updateUserDto: UpdateUserDto, @Req() req: Request) {
+    const user: User = req['user'];
+    return this.usersService.update(user.id, updateUserDto);
   }
 
   @Delete(':id')

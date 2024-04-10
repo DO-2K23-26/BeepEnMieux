@@ -141,6 +141,7 @@ export class UsersService {
     id: number,
     updateUserDto: UpdateUserDto,
   ): Promise<Omit<User, 'password'> | null> {
+    // Vérifier si l'utilisateur existe
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new HttpException(
@@ -149,7 +150,43 @@ export class UsersService {
       );
     }
 
-    // Mettre à jour l'utilisateur avec les données excluant le mot de passe
+    // Vérifier si l'email est déjà utilisé
+    if (updateUserDto.email) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: updateUserDto.email },
+      });
+      if (existingUser && existingUser.id !== id) {
+        throw new HttpException(
+          'User with email: ' + updateUserDto.email + ' already exists',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+    }
+
+    // Vérifier si le nickname est déjà utilisé
+    if (updateUserDto.nickname) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { nickname: updateUserDto.nickname },
+      });
+      if (existingUser && existingUser.id !== id) {
+        throw new HttpException(
+          'User with nickname: ' + updateUserDto.nickname + ' already exists',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+    }
+
+    // Vérifier si le mot de passe est fourni et le hasher
+    if (updateUserDto.password) {
+      const saltOrRounds = 10;
+      const hashedPassword = await bcrypt.hash(
+        updateUserDto.password,
+        saltOrRounds,
+      );
+      updateUserDto.password = hashedPassword;
+    }
+
+    // Mettre à jour l'utilisateur avec les données
     const updatedUser = await this.prisma.user.update({
       where: { id },
       data: updateUserDto,
