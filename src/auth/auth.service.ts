@@ -29,21 +29,29 @@ export class AuthService {
     if (!user) {
       throw new NotAcceptableException('Invalid email or password');
     }
-    const payload = { id: user.id ,email: user.email, nickname: user.nickname, sub: user._id };
+    return this.accessToken(user);
+  }
+
+  async accessToken(user: any) {
+    const payload = { id: user.id, email: user.email, nickname: user.nickname, sub: user._id };
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '1d' }),
+      access_token: this.jwtService.sign(payload, { expiresIn: '5m' }),
     };
   }
+
   async verifyRefreshToken(jwtToken: string) {
       const decodedToken = this.jwtService.decode(jwtToken);
+      if (!decodedToken) {
+        throw new NotAcceptableException('Invalid token');
+      }
       return decodedToken.email;
   }
 
   async refreshToken(user: any) {
     const tokenId = uuid();
-    const payload = { email: user.email, nickname: user.nickname, sub: user._id, tokenId: tokenId};
+    const payload = { id: user.id, email: user.email, nickname: user.nickname, sub: user._id, tokenId: tokenId};
     return {
-      refresh_token: this.jwtService.sign(payload, { expiresIn: '15m' }),
+      refresh_token: this.jwtService.sign(payload, { expiresIn: '1d' }),
     };
   }
 
