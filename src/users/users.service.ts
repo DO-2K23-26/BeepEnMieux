@@ -1,9 +1,4 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Groupe, Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -90,39 +85,24 @@ export class UsersService {
     });
   }
 
-  async removeUserFromAllGroupes(socketId: string): Promise<void> {
-    const groupes = await this.findGroupesByUserSocketId(socketId);
-    for (const groupe of groupes) {
-      this.prisma.groupe.update({
-        where: { nom: groupe.nom },
-        data: {
-          users: {
-            disconnect: { socketId: socketId },
-          },
-        },
-      });
-    }
-  }
-
-  async removeUserFromGroupe(socketId: string, groupe: string): Promise<void> {
-    this.prisma.groupe.update({
-      where: { nom: groupe },
-      data: {
-        users: {
-          disconnect: { socketId },
-        },
-      },
-    });
-  }
-
-  async create(createUserDto: Prisma.UserCreateInput): Promise<Omit<User, 'password'> | null>{
+  async create(
+    createUserDto: Prisma.UserCreateInput,
+  ): Promise<Omit<User, 'password'> | null> {
     const { email, nickname, password } = createUserDto;
-    const existingUser = await this.prisma.user.findUnique({ where: { email } });
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
     if (existingUser) {
-      throw new HttpException("User with email: " + email + " already exists", HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'User with email: ' + email + ' already exists',
+        HttpStatus.NOT_FOUND,
+      );
     }
     if (!email || !nickname || !password) {
-      throw new HttpException("Email, nickname and password are required", HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Email, nickname and password are required',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     return this.prisma.user.create({
       data: { email, nickname, password },
@@ -133,36 +113,40 @@ export class UsersService {
     const users = await this.prisma.user.findMany();
     for (const user of users) {
       user.password = undefined;
-    } 
+    }
     return users;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<Omit<User, 'password'> | null> {
+  async update(
+    id: number,
+    updateUserDto: UpdateUserDto,
+  ): Promise<Omit<User, 'password'> | null> {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
-      throw new HttpException("User id: " + id + " not found", HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'User id: ' + id + ' not found',
+        HttpStatus.NOT_FOUND,
+      );
     }
-    
-    // Exclure la propriété password de l'objet updateUserDto
-    const { password, ...data } = updateUserDto;
-  
+
     // Mettre à jour l'utilisateur avec les données excluant le mot de passe
     const updatedUser = await this.prisma.user.update({
       where: { id },
-      data,
+      data: updateUserDto,
     });
-  
+
     // Supprimer le mot de passe du résultat retourné
     updatedUser.password = undefined;
     return updatedUser;
   }
-  
-  
 
   async remove(id: number): Promise<Omit<User, 'password'> | null> {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
-      throw new HttpException("User id: " + id + " not found", HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'User id: ' + id + ' not found',
+        HttpStatus.NOT_FOUND,
+      );
     }
     const deleteUser = await this.prisma.user.delete({
       where: { id },
@@ -175,7 +159,9 @@ export class UsersService {
     if (!user || !groupe) {
       return false;
     }
-    const groupes = await this.prisma.user.findUnique({ where: { id: user.id } }).groupes();
+    const groupes = await this.prisma.user
+      .findUnique({ where: { id: user.id } })
+      .groupes();
     return groupes.some((g) => g.id === groupe.id);
   }
 }
