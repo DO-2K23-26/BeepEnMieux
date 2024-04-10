@@ -210,4 +210,35 @@ export class GroupeService {
 
     return { owner, superUsers, users, timeOutUsers };
   }
+
+  async TimeoutUser(
+    groupeName: string,
+    nickname: string,
+    time: number,
+    reason: string,
+  ) {
+    // Check if the user exists
+    const userProfile = await this.userService.findOneByNickname(nickname);
+    if (!userProfile) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    // Check if the group exists
+    const groupe = await this.findByName(groupeName);
+    if (!groupe) {
+      throw new HttpException('Group not found', HttpStatus.NOT_FOUND);
+    }
+    // Check if the user is in the group
+    if (!(await this.isInGroupe(userProfile, groupeName))) {
+      throw new HttpException('User not in group', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.prisma.timedOut.create({
+      data: {
+        groupId: groupe.id,
+        userId: userProfile.id,
+        time: time.toString(),
+        reason,
+      },
+    });
+  }
 }

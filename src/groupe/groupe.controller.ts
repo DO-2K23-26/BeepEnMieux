@@ -85,4 +85,24 @@ export class GroupeController {
 
     return this.groupeService.createSuperUserGroupe(groupeName, nickname);
   }
+
+  @Post(':name/timeout')
+  async TimeoutUser(
+    @Req() request: Request,
+    @Param('name') groupeName: string,
+    @Body('user') nickname: string,
+    @Body('time') time: number,
+    @Body('reason') reason: string,
+  ) {
+    // Check if the user have the right
+    const userProfile = request['user'];
+    if (
+      !(await this.groupeService.isSuperUser(userProfile, groupeName)) ||
+      !(await this.groupeService.isOwner(userProfile, groupeName))
+    ) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.groupeService.TimeoutUser(groupeName, nickname, time, reason);
+  }
 }
