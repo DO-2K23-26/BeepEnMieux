@@ -123,4 +123,17 @@ export class GroupeController {
 
     return this.groupeService.TimeoutUser(groupeName, nickname, time, reason);
   }
+
+  @Get(':name/superuser')
+  async isSuperUser(
+    @Req() request: Request,
+    @Param('name') groupeName: string,
+  ) {
+    const userProfile = request['user'];
+    const estSuperUser = this.groupeService.isSuperUser(
+      userProfile,
+      groupeName,
+    );
+    return estSuperUser;
+  }
 }
