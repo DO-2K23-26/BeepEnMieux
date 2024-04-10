@@ -18,7 +18,7 @@ model User {
   email            String     @unique
   nickname         String     @unique
   password         String
-  socketId         String?    @unique
+  socketId         String?
   messages         Message[]
   groupes          Groupe[]   @relation("usersGroupe")
   groupesSuperUser Groupe[]   @relation("superUsersGroupe")
