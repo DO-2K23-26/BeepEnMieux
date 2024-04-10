@@ -97,7 +97,7 @@ export class GroupeController {
     // Check if the user have the right
     const userProfile = request['user'];
     if (
-      !(await this.groupeService.isSuperUser(userProfile, groupeName)) ||
+      !(await this.groupeService.isSuperUser(userProfile, groupeName)) &&
       !(await this.groupeService.isOwner(userProfile, groupeName))
     ) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);

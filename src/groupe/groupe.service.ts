@@ -1,6 +1,6 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Groupe, Prisma, TimedOut, User } from '@prisma/client';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { UsersService } from 'src/users/users.service';
 
 @Injectable()
@@ -179,16 +179,23 @@ export class GroupeService {
             timeOutUser.date.getTime() + Number(timeOutUser.time) <
             Date.now()
           ) {
-            return this.prisma.user.findUnique({
-              where: { id: timeOutUser.userId },
-            });
+            return timeOutUser;
           }
         });
       });
 
+    const usersBanned = await Promise.all(
+      timeOutUsers.map(async (timeOutUser) => {
+        const user = await this.prisma.user.findUnique({
+          where: { id: timeOutUser.userId },
+        });
+        return user.nickname;
+      }),
+    );
+
     // Remove timeOut users from users
-    for (let i = 0; i < timeOutUsers.length; i++) {
-      const index = users.indexOf((await timeOutUsers[i]).nickname);
+    for (let i = 0; i < usersBanned.length; i++) {
+      const index = users.indexOf(usersBanned[i]);
       if (index > -1) {
         users.splice(index, 1);
       }
@@ -208,7 +215,7 @@ export class GroupeService {
       }
     }
 
-    return { owner, superUsers, users, timeOutUsers };
+    return { owner, superUsers, users, timeOut: usersBanned };
   }
 
   async TimeoutUser(
@@ -222,6 +229,14 @@ export class GroupeService {
     if (!userProfile) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
+    // Check if the user to timeout is the owner or superUser
+    if (
+      (await this.isSuperUser(userProfile, groupeName)) ||
+      (await this.isOwner(userProfile, groupeName))
+    ) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
     // Check if the group exists
     const groupe = await this.findByName(groupeName);
     if (!groupe) {
