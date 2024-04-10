@@ -40,7 +40,7 @@ export class GroupeService {
       });
   }
 
-  async isInGroupe(userProfile: any, groupeName: string): Promise<boolean> {
+  async isInGroupe(userProfile: User, groupeName: string): Promise<boolean> {
     return this.prisma.groupe
       .findFirst({
         where: {

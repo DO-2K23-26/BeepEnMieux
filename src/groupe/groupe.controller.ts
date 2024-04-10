@@ -30,21 +30,9 @@ export class GroupeController {
   @Get(':name')
   async findOne(@Param('name') name: string, @Req() request: Request) {
     const userProfile: User = request['user'];
-    const group = await this.groupeService.findByName(name);
-    const users_draft = await this.groupeService.findUsersByGroupeId(group.id);
 
-    // Check if the user is in the group
-    let userInGroup = false;
-    for (let i = 0; i < users_draft.length; i++) {
-      if (users_draft[i].id == userProfile.id) {
-        userInGroup = true;
-      }
-    }
-    if (!userInGroup) {
-      throw new HttpException(
-        `User ${userProfile.nickname} is not in the group ${name}`,
-        HttpStatus.UNAUTHORIZED,
-      );
+    if (!(await this.groupeService.isInGroupe(userProfile, name))) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
 
     const users = this.groupeService.findGroupeUsersFormat(name);
