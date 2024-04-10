@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Groupe, Prisma, User } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -86,9 +87,11 @@ export class UsersService {
   }
 
   async create(
-    createUserDto: Prisma.UserCreateInput,
+    email: string,
+    nickname: string,
+    password: string,
   ): Promise<Omit<User, 'password'> | null> {
-    const { email, nickname, password } = createUserDto;
+    // Check if user already exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -98,15 +101,32 @@ export class UsersService {
         HttpStatus.NOT_FOUND,
       );
     }
+
+    // Check if email, nickname and password are provided
     if (!email || !nickname || !password) {
       throw new HttpException(
         'Email, nickname and password are required',
         HttpStatus.BAD_REQUEST,
       );
     }
-    return this.prisma.user.create({
-      data: { email, nickname, password },
+
+    // Hash the password
+    const saltOrRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltOrRounds);
+    const user: Prisma.UserCreateInput = {
+      email,
+      nickname,
+      password: hashedPassword,
+    };
+
+    const result = await this.prisma.user.create({
+      data: user,
     });
+
+    // Supprimer le mot de passe du résultat retourné
+    result.password = undefined;
+
+    return result;
   }
 
   async findAll() {

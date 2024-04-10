@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   HttpException,
   HttpStatus,
   Param,
@@ -10,7 +9,7 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
-import { User, Prisma } from '@prisma/client';
+import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
@@ -29,20 +28,16 @@ export class UsersController {
     @Body('email') email: string,
     @Body('nickname') nickname: string,
   ): Promise<Omit<User, 'password'>> {
-    const saltOrRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltOrRounds);
-    const user: Prisma.UserCreateInput = {
-      email: email,
-      nickname: nickname,
-      password: hashedPassword,
-    };
-    const result = await this.usersService.create(user);
-    return result;
+    const user = await this.usersService.create(email, nickname, password);
+    return user;
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto,
-  @Req() req: Request) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @Req() req: Request,
+  ) {
     const user = req['user'];
     if (user.id !== Number(id)) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
@@ -57,8 +52,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string,
-  @Req() req: Request){
+  remove(@Param('id') id: string, @Req() req: Request) {
     const user = req['user'];
     if (user.id !== Number(id)) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
