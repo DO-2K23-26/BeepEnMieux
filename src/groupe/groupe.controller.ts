@@ -130,7 +130,6 @@ export class GroupeController {
     @Param('name') groupeName: string,
   ) {
     const userProfile = request['user'];
-    console.debug(userProfile);
     const estSuperUser = this.groupeService.isSuperUser(
       userProfile,
       groupeName,
