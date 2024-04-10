@@ -53,7 +53,9 @@ export class GroupeService {
         data: { users: { connect: user } },
       });
     } else {
-      return await this.prisma.groupe.create({ data: { nom: groupe, users: { connect: user }, ownerId : user.id } });
+      return await this.prisma.groupe.create({
+        data: { nom: groupe, users: { connect: user }, ownerId: user.id },
+      });
     }
   }
 }

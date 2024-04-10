@@ -3,20 +3,16 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
   Param,
   Patch,
   Post,
-  Headers,
-  HttpException,
-  HttpStatus,
-  UseGuards,
-  Request,
-  ExecutionContext,
   Req,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { GroupeService } from './groupe.service';
 import { AuthService } from 'src/auth/auth.service';
+import { GroupeService } from './groupe.service';
 
 @Controller('groupe')
 export class GroupeController {
@@ -25,12 +21,7 @@ export class GroupeController {
     private readonly authService: AuthService,
   ) {}
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.groupeService.findOne(Number(id));
-  }
-
-  @Get('getGroupes/')
+  @Get()
   async findGroupesByUserId(@Req() request: Request) {
     const userProfile = request['user'];
     if (!userProfile) {
@@ -39,17 +30,12 @@ export class GroupeController {
     return this.groupeService.findGroupesByUserId(userProfile.id);
   }
 
-  @Post('join/:id')
-  async join(@Param('id') id: string, @Req() request: Request) {
-    const userProfile = request['user'];
-    if (!userProfile) {
-      throw new HttpException('Unauthorized', 401);
-    }
-    const groupe = await this.groupeService.findByName(id);
-    return this.groupeService.addOrCreateGroupe(groupe.nom, userProfile);
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    throw new HttpException('Not implemented', HttpStatus.NOT_IMPLEMENTED);
   }
 
-  @Post('createAndJoin/:id')
+  @Post(':id')
   async createAndJoin(@Param('id') id: string, @Req() request: Request) {
     const userProfile = request['user'];
     if (!userProfile) {
@@ -62,9 +48,9 @@ export class GroupeController {
   @Patch(':id')
   update(@Param('id') id: number, @Body() groupe: Prisma.GroupeUpdateInput) {
     throw new HttpException('Not implemented', HttpStatus.NOT_IMPLEMENTED);
-  /*
+    /*
     return this.groupeService.update(id, groupe);
-  */
+    */
   }
 
   @Delete(':id')
