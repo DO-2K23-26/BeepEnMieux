@@ -65,7 +65,6 @@ export class GroupeService {
       return false;
     }
 
-    console.log(userProfile);
     return this.prisma.groupe
       .update({
         where: { nom: groupeName },
