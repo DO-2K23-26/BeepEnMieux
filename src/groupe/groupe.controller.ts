@@ -150,7 +150,7 @@ export class GroupeController {
   }
 
   @Get(':name/timeout/:user')
-  async getTimeouts(
+  async getTimeout(
     @Req() request: Request,
     @Param('name') groupeName: string,
     @Param('user') nickname: string,
