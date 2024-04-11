@@ -114,8 +114,11 @@ export class GroupeService {
     return this.prisma.groupe.findFirst({ where: { id } });
   }
 
-  async update(id: number, groupe: Prisma.GroupeUpdateInput) {
-    return await this.prisma.groupe.update({ where: { id }, data: groupe });
+  async update(name: string, groupe: Prisma.GroupeUpdateInput) {
+    return await this.prisma.groupe.update({
+      where: { nom: name },
+      data: groupe,
+    });
   }
 
   async remove(id: number) {

@@ -50,12 +50,20 @@ export class GroupeController {
     return groupe;
   }
 
-  @Patch(':id')
-  update(@Param('id') id: number, @Body() groupe: Prisma.GroupeUpdateInput) {
-    throw new HttpException('Not implemented', HttpStatus.NOT_IMPLEMENTED);
-    /*
-    return this.groupeService.update(id, groupe);
-    */
+  @Patch(':name')
+  async update(
+    @Param('name') name: string,
+    @Body() groupe: Prisma.GroupeUpdateInput,
+    @Req() request: Request,
+  ) {
+    const userProfile = request['user'];
+
+    // check if the user is the owner
+    if (!(await this.groupeService.isOwner(userProfile, name))) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.groupeService.update(name, groupe);
   }
 
   @Delete(':id')
