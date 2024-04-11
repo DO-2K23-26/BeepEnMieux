@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Groupe, Prisma, TimedOut, User } from '@prisma/client';
+import { Groupe, Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UsersService } from 'src/users/users.service';
 
@@ -179,7 +179,7 @@ export class GroupeService {
 
       for (let j = 0; j < timeOutUsers.length; j++) {
         if (
-          timeOutUsers[j].date.getTime() + Number(timeOutUsers[j].time) >
+          timeOutUsers[j].date.getTime() + Number(timeOutUsers[j].time) * 1000 >
           Date.now()
         ) {
           users.splice(users.indexOf(users_draft[i].nickname), 1);
@@ -222,7 +222,7 @@ export class GroupeService {
     for (let i = 0; i < timeOutUsers.length; i++) {
       if (
         timeOutUsers[i].userId === userProfile.id &&
-        timeOutUsers[i].date.getTime() + Number(timeOutUsers[i].time) >
+        timeOutUsers[i].date.getTime() + Number(timeOutUsers[i].time) * 1000 >
           Date.now()
       ) {
         return true;
