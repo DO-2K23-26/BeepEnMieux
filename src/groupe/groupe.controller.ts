@@ -53,7 +53,7 @@ export class GroupeController {
   @Patch(':name')
   async update(
     @Param('name') name: string,
-    @Body() groupe: Prisma.GroupeUpdateInput,
+    @Body('groupe') groupe: Prisma.GroupeUpdateInput,
     @Req() request: Request,
   ) {
     const userProfile = request['user'];
