@@ -275,14 +275,35 @@ export class GroupeService {
       throw new HttpException('User not in group', HttpStatus.UNAUTHORIZED);
     }
 
-    return this.prisma.timedOut.create({
+    // Check if the user is already timed out
+    const isInTimeOut = await this.prisma.timedOut.findMany({
+      where: {
+        groupId: groupe.id,
+        userId: userProfile.id,
+      },
+    });
+
+    if(isInTimeOut.length > 0) {
+      return (await this.prisma.timedOut.updateMany({
+        where: {
+          groupId: groupe.id,
+          userId: userProfile.id,
+        },
+        data: {
+          time: time.toString(),
+          reason,
+        },
+      })).count > 0;
+    }
+
+    return !!(await this.prisma.timedOut.create({
       data: {
         groupId: groupe.id,
         userId: userProfile.id,
         time: time.toString(),
         reason,
       },
-    });
+    }));
   }
 
   async removeSuperUserGroupe(groupeName: string, nickname: string) {

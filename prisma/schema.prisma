@@ -48,7 +48,6 @@ model Message {
 }
 
 model TimedOut {
-  id      Int      @id @default(autoincrement())
   userId  Int
   groupId Int
   date    DateTime @default(now())
@@ -56,4 +55,5 @@ model TimedOut {
   time    String
   user    User     @relation(fields: [userId], references: [id])
   group   Groupe   @relation(fields: [groupId], references: [id])
+  @@id([userId, groupId])
 }

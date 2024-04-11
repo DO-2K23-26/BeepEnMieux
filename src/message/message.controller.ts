@@ -56,6 +56,9 @@ export class MessageController {
     if ((await this.userService.isInGroupe(userProfile, groupe)) === false) {
       throw new HttpException('Unauthorized', 401);
     }
+    if ((await this.groupeService.isTimeOut(userProfile, id))) {
+      throw new HttpException('User is timed out', 401);
+    }
     return this.messageService.findAllByGroup(id);
   }
 
