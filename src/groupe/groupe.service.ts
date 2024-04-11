@@ -154,6 +154,7 @@ export class GroupeService {
 
   async findGroupeUsersFormat(groupe: string) {
     // Get all users in the group
+    const group = await this.findByName(groupe);
     const users_draft = await this.prisma.groupe
       .findUnique({ where: { nom: groupe } })
       .users();
@@ -174,7 +175,7 @@ export class GroupeService {
     const usersBanned = [];
     for (let i = 0; i < users_draft.length; i++) {
       const timeOutUsers = await this.prisma.timedOut.findMany({
-        where: { userId: users_draft[i].id },
+        where: { userId: users_draft[i].id, groupId: group.id },
       });
 
       for (let j = 0; j < timeOutUsers.length; j++) {
