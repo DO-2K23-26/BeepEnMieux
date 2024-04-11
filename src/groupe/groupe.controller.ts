@@ -13,12 +13,14 @@ import {
 import { Groupe, Prisma, User } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { GroupeService } from './groupe.service';
+import { UsersService } from 'src/users/users.service';
 
 @Controller('groupe')
 export class GroupeController {
   constructor(
     private readonly groupeService: GroupeService,
     private readonly authService: AuthService,
+    private readonly userService: UsersService,
   ) {}
 
   @Get()
@@ -145,5 +147,25 @@ export class GroupeController {
   async isOwner(@Req() request: Request, @Param('name') groupeName: string) {
     const userProfile = request['user'];
     return this.groupeService.isOwner(userProfile, groupeName);
+  }
+
+  @Get(':name/timeout/:user')
+  async getTimeouts(
+    @Req() request: Request,
+    @Param('name') groupeName: string,
+    @Param('user') nickname: string,
+  ) {
+    const userProfile = request['user'];
+    const user = await this.userService.findOneByNickname(nickname);
+    console.log(user);
+    if (
+      !(await this.groupeService.isSuperUser(userProfile, groupeName)) &&
+      !(await this.groupeService.isOwner(userProfile, groupeName)) &&
+      !((await user.id) === userProfile.id)
+    ) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.groupeService.isTimeOut(user, groupeName);
   }
 }
