@@ -170,36 +170,21 @@ export class GroupeService {
       .superUsers();
     const superUsers = superUsers_draft.map((user) => user.nickname);
 
-    // Get all timeOut users from the group and check if they are timeOut
-    const timeOutUsers = await this.prisma.timedOut
-      .findMany({
-        where: { groupId: (await this.findByName(groupe)).id },
-      })
-      .then((timeOutUsers: TimedOut[]) => {
-        return timeOutUsers.map((timeOutUser) => {
-          if (
-            timeOutUser.date.getTime() + Number(timeOutUser.time) <
-            Date.now()
-          ) {
-            return timeOutUser;
-          }
-        });
+    // Check if the user is timeOut
+    const usersBanned = [];
+    for (let i = 0; i < users_draft.length; i++) {
+      const timeOutUsers = await this.prisma.timedOut.findMany({
+        where: { userId: users_draft[i].id },
       });
 
-    const usersBanned = await Promise.all(
-      timeOutUsers.map(async (timeOutUser) => {
-        const user = await this.prisma.user.findUnique({
-          where: { id: timeOutUser.userId },
-        });
-        return user.nickname;
-      }),
-    );
-
-    // Remove timeOut users from users
-    for (let i = 0; i < usersBanned.length; i++) {
-      const index = users.indexOf(usersBanned[i]);
-      if (index > -1) {
-        users.splice(index, 1);
+      for (let j = 0; j < timeOutUsers.length; j++) {
+        if (
+          timeOutUsers[j].date.getTime() + Number(timeOutUsers[j].time) >
+          Date.now()
+        ) {
+          users.splice(users.indexOf(users_draft[i].nickname), 1);
+          usersBanned.push(users_draft[i].nickname);
+        }
       }
     }
 
@@ -283,17 +268,21 @@ export class GroupeService {
       },
     });
 
-    if(isInTimeOut.length > 0) {
-      return (await this.prisma.timedOut.updateMany({
-        where: {
-          groupId: groupe.id,
-          userId: userProfile.id,
-        },
-        data: {
-          time: time.toString(),
-          reason,
-        },
-      })).count > 0;
+    if (isInTimeOut.length > 0) {
+      return (
+        (
+          await this.prisma.timedOut.updateMany({
+            where: {
+              groupId: groupe.id,
+              userId: userProfile.id,
+            },
+            data: {
+              time: time.toString(),
+              reason,
+            },
+          })
+        ).count > 0
+      );
     }
 
     return !!(await this.prisma.timedOut.create({
