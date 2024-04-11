@@ -130,10 +130,12 @@ export class GroupeController {
     @Param('name') groupeName: string,
   ) {
     const userProfile = request['user'];
-    const estSuperUser = this.groupeService.isSuperUser(
-      userProfile,
-      groupeName,
-    );
-    return estSuperUser;
+    return this.groupeService.isSuperUser(userProfile, groupeName);
+  }
+
+  @Get(':name/owner')
+  async isOwner(@Req() request: Request, @Param('name') groupeName: string) {
+    const userProfile = request['user'];
+    return this.groupeService.isOwner(userProfile, groupeName);
   }
 }
