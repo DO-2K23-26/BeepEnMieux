@@ -55,7 +55,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.log(`Client is not in a room`);
       throw new WsException('Client is not in a room');
     }
+    const isTimedOut = await this.groupeService.isTimeOut(author, groupeName);
+    if (isTimedOut) {
+      this.logger.log(`User is timed out`);
+      throw new WsException('User is timed out');
+    }
+    
     const groupe = await this.groupeService.findByName(groupeName);
+
     let retour = {
       contenu: (await data).contenu,
       timestamp: (await data).timestamp,
