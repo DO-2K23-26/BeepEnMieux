@@ -217,6 +217,32 @@ export class GroupeService {
     return { owner, superUsers, users, timeOut: usersBanned };
   }
 
+  async isTimeOut(userProfile: User, groupeName: string) {
+    const groupe = await this.findByName(groupeName);
+    if (!groupe) {
+      throw new HttpException('Group not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (!(await this.isInGroupe(userProfile, groupeName))) {
+      throw new HttpException('User not in group', HttpStatus.UNAUTHORIZED);
+    }
+
+    const timeOutUsers = await this.prisma.timedOut.findMany({
+      where: { groupId: groupe.id },
+    });
+
+    for (let i = 0; i < timeOutUsers.length; i++) {
+      if (
+        timeOutUsers[i].userId === userProfile.id &&
+        timeOutUsers[i].date.getTime() + Number(timeOutUsers[i].time) >
+          Date.now()
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   async TimeoutUser(
     groupeName: string,
     nickname: string,
