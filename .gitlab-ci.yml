@@ -1,9 +1,9 @@
 stages:
-  - Build
-  - Test
-  - Store
-  - Deploy
-  - Documentation
+  - build
+  - test
+  - store
+  - documentation
+  - deploy
 
 variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
@@ -11,7 +11,7 @@ variables:
 Buid image:
   tags:
     - shell
-  stage: Build
+  stage: build
   script:
     - docker build --cache-from $IMAGE_TAG -t $IMAGE_TAG .
   cache:
@@ -23,13 +23,13 @@ Static Code Analysis:
   tags:
     - docker
   image: node:latest
-  stage: Test
+  stage: test
   script:
     - npm install
     - npm run lint-no-fix
 
 Dependency Security Scan:
-  stage: Test
+  stage: test
   image: node:latest
   script:
     - npm install
@@ -39,7 +39,7 @@ Dependency Security Scan:
 Store image:
   tags:
     - shell
-  stage: Store
+  stage: store
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:latest
@@ -49,38 +49,10 @@ Store image:
   only:
     - main
 
-Deploy to Production:
-  tags:
-    - docker
-  image: ilyasemenov/gitlab-ci-git-push
-  stage: Deploy
-  when: manual
-  environment:
-    name: production
-    url: http://localhost:9644
-  only:
-    - main
-  script:
-    - git-push ssh://dokku@162.38.112.145:22/beepenmieux
-
-# Documentation:
-#   tags:
-#     - docker
-#   stage: deploy
-#   image: node:latest
-#   script:
-#     - npm install
-#     - npm run docs
-#   artifacts:
-#     paths:
-#       - public/
-#   only:
-#     - main
-
 pages:
   tags:
     - docker
-  stage: Documentation
+  stage: documentation
   image: node:latest
   script:
     - npm install
@@ -90,3 +62,17 @@ pages:
       - public
   only:
     - main
+
+Deploy to Production:
+  tags:
+    - docker
+  image: ilyasemenov/gitlab-ci-git-push
+  stage: deploy
+  when: manual
+  environment:
+    name: production
+    url: http://localhost:9644
+  only:
+    - main
+  script:
+    - git-push ssh://dokku@162.38.112.145:22/beepenmieux
