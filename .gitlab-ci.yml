@@ -5,7 +5,7 @@ before_script: []
 pages:
   script:
     - npm install
-    - npm docs
+    - npm run docs
   artifacts:
     paths:
       # The folder that contains the files to be exposed at the Page URL
