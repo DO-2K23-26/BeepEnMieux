@@ -9,9 +9,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super();
   }
 
-  async validate(@Headers('authorization') authorization: string){
+  async validate(@Headers('authorization') authorization: string) {
     const payload = authorization.replace('Bearer ', '');
-    
+
     const user = await this.authService.infoUser(payload);
     if (!user) {
       throw new UnauthorizedException();

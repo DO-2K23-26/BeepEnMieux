@@ -1,4 +1,4 @@
-import { Groupe, User } from "@prisma/client";
+import { Groupe, User } from '@prisma/client';
 
 export class CreateMessageDto {
   contenu: any; // Adjust the type according to your actual data structure

@@ -19,9 +19,14 @@ import { AuthGuard } from './auth.guard';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '5m' },
     }),
-    PrismaModule
+    PrismaModule,
   ],
-  providers: [ { provide: APP_GUARD, useClass: AuthGuard } ,AuthService, UsersService, JwtStrategy],
+  providers: [
+    { provide: APP_GUARD, useClass: AuthGuard },
+    AuthService,
+    UsersService,
+    JwtStrategy,
+  ],
   controllers: [AuthController],
   exports: [AuthService],
 })
