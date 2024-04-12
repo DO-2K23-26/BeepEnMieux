@@ -2,9 +2,19 @@ stages:
   - build
   - store
   - deploy
+  - lint
 
 variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+
+eslint:
+  tags:
+    - docker
+  image: node
+  stage: lint
+  script:
+    - npm i eslint
+    - npm run lint
 
 Buid image:
   tags:
