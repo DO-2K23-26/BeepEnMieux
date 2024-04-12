@@ -3,6 +3,8 @@ stages:
   - test
   - store
   - deploy
+  - documentation
+  - cleanup
 
 variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
@@ -61,3 +63,15 @@ Deploy to Production:
     - main
   script:
     - git-push ssh://dokku@162.38.112.145:22/beepenmieux
+
+Documentation:
+  tags:
+    - shell
+  stage: documentation
+  script:
+    - npm run docs
+  artifacts:
+    paths:
+      - documentation/
+  only:
+    - main
