@@ -1,34 +1,39 @@
 stages:
   - build
+  - test
   - store
   - deploy
-  - lint
 
 variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-
-eslint:
-  tags:
-    - docker
-  image: node
-  stage: lint
-  script:
-    - npm i eslint
-    - npm run lint-no-fix
 
 Buid image:
   tags:
     - shell
   stage: build
   script:
-    - docker build -t $IMAGE_TAG .
+    - docker build --cache-from $IMAGE_TAG -t $IMAGE_TAG .
+  cache:
+    key: ${CI_PIPELINE_ID}
+    paths:
+      - node_modules/
 
-# Build compose:
-#   tags:
-#     - shell
-#   stage: build
-#   script:
-#     - docker compose -f compose.yaml up -d
+Static Code Analysis:
+  tags:
+    - docker
+  image: node:latest
+  stage: test
+  script:
+    - npm install
+    - npm run lint-no-fix
+
+Dependency Security Scan:
+  stage: test
+  image: node:latest
+  script:
+    - npm install
+    - npm audit
+
 
 Store image:
   tags:
@@ -36,15 +41,19 @@ Store image:
   stage: store
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker push $IMAGE_TAG
+    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:latest
+    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${CI_REGISTRY_IMAGE}:latest
+    - docker push ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
   only:
     - main
 
-Deploy to dokku:
+Deploy to Production:
   tags:
     - docker
   image: ilyasemenov/gitlab-ci-git-push
   stage: deploy
+  when: manual
   environment:
     name: production
     url: http://localhost:9644
