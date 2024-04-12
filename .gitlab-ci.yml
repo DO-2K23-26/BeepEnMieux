@@ -66,9 +66,11 @@ Deploy to Production:
 
 Documentation:
   tags:
-    - shell
+    - docker
   stage: documentation
+  image: node:latest
   script:
+    - npm install
     - npm run docs
   artifacts:
     paths:
