@@ -12,7 +12,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "npx prisma migrate deploy && node dist/main",
-    "docs": "compodoc -p tsconfig.json",
+    "docs": "compodoc -p tsconfig.json -d public",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "lint-no-fix": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "test": "jest",
