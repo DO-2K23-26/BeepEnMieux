@@ -1,79 +1,16 @@
-stages:
-  - build
-  - test
-  - store
-  - deploy
-  - documentation
-  - cleanup
-
-variables:
-  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-
-Buid image:
-  tags:
-    - shell
-  stage: build
-  script:
-    - docker build --cache-from $IMAGE_TAG -t $IMAGE_TAG .
-  cache:
-    key: ${CI_PIPELINE_ID}
-    paths:
-      - node_modules/
-
-Static Code Analysis:
-  tags:
-    - docker
-  image: node:latest
-  stage: test
+# The Docker image that will be used to build your app
+image: node:lts
+# Functions that should be executed before the build script is run
+before_script: []
+pages:
   script:
     - npm install
-    - npm run lint-no-fix
-
-Dependency Security Scan:
-  stage: test
-  image: node:latest
-  script:
-    - npm install
-    - npm audit
-
-
-Store image:
-  tags:
-    - shell
-  stage: store
-  script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:latest
-    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
-    - docker push ${CI_REGISTRY_IMAGE}:latest
-    - docker push ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
-  only:
-    - main
-
-Deploy to Production:
-  tags:
-    - docker
-  image: ilyasemenov/gitlab-ci-git-push
-  stage: deploy
-  when: manual
-  environment:
-    name: production
-    url: http://localhost:9644
-  only:
-    - main
-  script:
-    - git-push ssh://dokku@162.38.112.145:22/beepenmieux
-
-Documentation:
-  tags:
-    - docker
-  stage: documentation
-  image: node:latest
-  script:
-    - npm install
-    - npm run docs
+    - npm docs
   artifacts:
     paths:
-      - documentation/
-  only:
-    - main
+      # The folder that contains the files to be exposed at the Page URL
+      - public
+  rules:
+    # This ensures that only pushes to the default branch will trigger
+    # a pages deploy
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
