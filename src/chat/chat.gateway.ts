@@ -26,10 +26,12 @@ import { MessageService } from 'src/message/message.service';
   },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(private userService: UsersService, 
-    private groupeService: GroupeService, 
+  constructor(
+    private userService: UsersService,
+    private groupeService: GroupeService,
     private authService: AuthService,
-    private messageService: MessageService) {}
+    private messageService: MessageService,
+  ) {}
 
   @WebSocketServer() server: Server = new Server<
     ServerToClientEvents,
@@ -38,15 +40,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private logger = new Logger('ChatGateway');
 
-
   @SubscribeMessage('chat')
   async handleChatEvent(
-    @MessageBody() data: Promise<{contenu: string, timestamp: number}>,
+    @MessageBody() data: Promise<{ contenu: string; timestamp: number }>,
     @ConnectedSocket() client: Socket,
   ): Promise<Message> {
     const token = client.handshake.auth.token;
     const author = (await this.authService.infoUser(token))?.user;
-    if(!author) {
+    if (!author) {
       this.logger.log(`Invalid author`);
       throw new WsException('Invalid author');
     }
@@ -60,20 +61,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.log(`User is timed out`);
       throw new WsException('User is timed out');
     }
-    
+
     const groupe = await this.groupeService.findByName(groupeName);
 
-    let retour = {
+    const retour = {
       contenu: (await data).contenu,
       timestamp: (await data).timestamp,
       author: author.nickname,
       id: null,
-    }
+    };
     const message: any = {
       contenu: (await data).contenu,
       author: author,
       groupe: groupe,
-      
+
       timestamp: (await data).timestamp,
     };
     const messageStocked = await this.messageService.create(message);
@@ -85,12 +86,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('edit')
   async handleEditEvent(
-    @MessageBody() data: Promise<{contenu: string, timestamp: number, id: number}>,
+    @MessageBody()
+    data: Promise<{ contenu: string; timestamp: number; id: number }>,
     @ConnectedSocket() client: Socket,
-  ){
+  ) {
     const token = client.handshake.auth.token;
     const author = (await this.authService.infoUser(token))?.user;
-    if(!author) {
+    if (!author) {
       this.logger.log(`Invalid author`);
       throw new WsException('Invalid author');
     }
@@ -99,15 +101,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.log(`Client is not in a room`);
       throw new WsException('Client is not in a room');
     }
-    const userId = (await this.messageService.findOne((await data).id)).authorId;
+    const userId = (await this.messageService.findOne((await data).id))
+      .authorId;
     if (userId !== author.id) {
       this.logger.log(`User is not the author`);
       throw new WsException('User is not the author');
     }
-    let retour = {
+    const retour = {
       id: (await data).id,
-      contenu: (await data).contenu
-    }
+      contenu: (await data).contenu,
+    };
     const groupe = await this.groupeService.findByName(groupeName);
     this.messageService.updateContenu((await data).id, (await data).contenu);
     this.server.to(groupe.nom).emit('edit', retour); // broadcast messages
@@ -115,12 +118,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('delete')
   async handleDeleteEvent(
-    @MessageBody() data: Promise<{id: number}>,
+    @MessageBody() data: Promise<{ id: number }>,
     @ConnectedSocket() client: Socket,
-  ){
+  ) {
     const token = client.handshake.auth.token;
     const author = (await this.authService.infoUser(token))?.user;
-    if(!author) {
+    if (!author) {
       this.logger.log(`Invalid author`);
       throw new WsException('Invalid author');
     }
@@ -129,7 +132,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.log(`Client is not in a room`);
       throw new WsException('Client is not in a room');
     }
-    const userId = (await this.messageService.findOne((await data).id)).authorId;
+    const userId = (await this.messageService.findOne((await data).id))
+      .authorId;
     if (userId !== author.id) {
       this.logger.log(`User is not the author`);
       throw new WsException('User is not the author');
@@ -138,16 +142,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.messageService.remove((await data).id);
     this.server.to(groupe.nom).emit('delete', (await data).id); // broadcast messages
   }
-      
 
   @SubscribeMessage('join_room')
-  async handleSetClientDataEvent(
-    client: Socket, data: string
-    ) {
+  async handleSetClientDataEvent(client: Socket, data: string) {
     console.log('join_room');
     //leave all rooms
     const groupes = await this.userService.findGroupesByUserSocketId(client.id);
-    const groupesNames = groupes.map(groupe => groupe.nom);
+    const groupesNames = groupes.map((groupe) => groupe.nom);
     for (const groupe of groupesNames) {
       client.leave(groupe);
     }
@@ -158,19 +159,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const groupe = await this.groupeService.findByName(data);
     const groupeName = groupe.nom;
     //exception if user or groupe is invalid
-    if(!user || !groupe) {
+    if (!user || !groupe) {
       throw new WsException('Invalid user or groupe');
     }
 
-    if(!groupesNames.includes(groupeName)) {
+    if (!groupesNames.includes(groupeName)) {
       throw new WsException('User not in groupe');
     }
 
     //join room
     if (user.socketId) {
-      this.logger.log(
-        `${user.socketId} is joining ${groupe.nom}`,
-      );
+      this.logger.log(`${user.socketId} is joining ${groupe.nom}`);
       client.join(groupe.nom);
     }
   }
