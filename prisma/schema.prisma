@@ -24,6 +24,7 @@ model User {
   serversOwned     Server[]   @relation("ownerServer")
   timedouts        TimedOut[]
   banned           Banned[]
+  roles            Role[]
 }
 
 model Channel {
@@ -43,6 +44,7 @@ model Server {
   owner      User       @relation("ownerServer", fields: [ownerId], references: [id])
   ownerId    Int
   banned     Banned[]   @relation("bannedServer")
+  roles      Role[]
 }
 
 model TimedOut {
@@ -75,4 +77,13 @@ model Message {
   channel    Channel  @relation(fields: [channelId], references: [id])
   channelId  Int
   timestamp  DateTime @default(now())
+}
+
+model Role {
+  id         Int      @id @default(autoincrement())
+  nom        String
+  server     Server     @relation(fields: [serverId], references: [id])
+  serverId   Int  
+  users      User[]
+  isAdmin    Boolean
 }
