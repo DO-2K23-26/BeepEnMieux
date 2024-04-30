@@ -5,183 +5,183 @@ import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class ServerService {
-    constructor (
-      private readonly prisma : PrismaService,
-      private readonly userService : UsersService,
-    ){}
-    async addOrCreateServer(name: string, userProfile: User): Promise<Server> {
-        const serverExist = await this.findByName(name);
+  constructor (
+    private readonly prisma : PrismaService,
+    private readonly userService : UsersService,
+  ){}
+  async addOrCreateServer(name: string, userProfile: User): Promise<Server> {
+      const serverExist = await this.findByName(name);
 
-        // If the group exists, add the user to the group else create the group
-        if (serverExist) {
-          const users = await this.findUsersByServerId(serverExist.id);
-          // Check if the user is already in the group
-          for (const element of users) {
-            if (element.id === userProfile.id) {
-              throw new HttpException(
-                'User already in the group',
-                HttpStatus.BAD_REQUEST,
-              );
-            }
+      // If the group exists, add the user to the group else create the group
+      if (serverExist) {
+        const users = await this.findUsersByServerId(serverExist.id);
+        // Check if the user is already in the group
+        for (const element of users) {
+          if (element.id === userProfile.id) {
+            throw new HttpException(
+              'User already in the group',
+              HttpStatus.BAD_REQUEST,
+            );
           }
-          return await this.prisma.server.update({
-            where: { id: serverExist.id },
-            data: { users: { connect: userProfile } },
-          });
-        } else {
-          return await this.prisma.server.create({
-            data: { nom: name, users: { connect: userProfile }, ownerId: userProfile.id },
-          });
         }
-    }
-
-    async findUsersByServerId(id: any) : Promise<User[]>{
-      return this.prisma.server.findFirst({ where: {id}}).users()
-    }
-
-    async findByName(name: string) : Promise<Server> {
-      return await this.prisma.server.findFirst({ where: { nom: name } });
-    }
-
-    async findServerUsersFormat(name: string) {
-      const server = await this.findByName(name);
-      const users_draft = await this.prisma.server
-        .findUnique({ where: { nom: name } })
-        .users();
-      const users = users_draft.map((user) => user.nickname);
-
-      const owner = (
-        await this.prisma.server.findUnique({ where: { nom: name } }).owner()
-      ).nickname;
-
-      // Get superUser of the group
-      const roles_draft = await this.prisma.server
-        .findUnique({ where: { nom: name } })
-        .roles();
-      let admins : string[] = []
-      await Promise.all(roles_draft.map(async (role) => {
-        if (role.isAdmin) {
-          this.prisma.user.findMany({where: role}).then((users) => users.forEach((elem) => {admins.fill(elem.nickname)}))
-        }
-      }));
-
-      // Check if the user is timeOut
-      const usersBanned = [];
-      for (const element of users_draft) {
-        const bannedUsers = await this.prisma.banned.findMany({
-          where: { userId: element.id, serverId: server.id },
+        return await this.prisma.server.update({
+          where: { id: serverExist.id },
+          data: { users: { connect: userProfile } },
         });
+      } else {
+        return await this.prisma.server.create({
+          data: { nom: name, users: { connect: userProfile }, ownerId: userProfile.id },
+        });
+      }
+  }
 
-        for (const row of bannedUsers) {
-          if (
-            row.date.getTime() + Number(row.time) * 1000 >
-            Date.now()
-          ) {
-            users.splice(users.indexOf(element.nickname), 1);
-            usersBanned.push(element);
-          }
+  async findUsersByServerId(id: any) : Promise<User[]>{
+    return this.prisma.server.findFirst({ where: {id}}).users()
+  }
+
+  async findByName(name: string) : Promise<Server> {
+    return await this.prisma.server.findFirst({ where: { nom: name } });
+  }
+
+  async findServerUsersFormat(name: string) {
+    const server = await this.findByName(name);
+    const users_draft = await this.prisma.server
+      .findUnique({ where: { nom: name } })
+      .users();
+    const users = users_draft.map((user) => user.nickname);
+
+    const owner = (
+      await this.prisma.server.findUnique({ where: { nom: name } }).owner()
+    ).nickname;
+
+    // Get superUser of the group
+    const roles_draft = await this.prisma.server
+      .findUnique({ where: { nom: name } })
+      .roles();
+    let admins : string[] = []
+    await Promise.all(roles_draft.map(async (role) => {
+      if (role.isAdmin) {
+        this.prisma.user.findMany({where: role}).then((users) => users.forEach((elem) => {admins.fill(elem.nickname)}))
+      }
+    }));
+
+    // Check if the user is timeOut
+    const usersBanned = [];
+    for (const element of users_draft) {
+      const bannedUsers = await this.prisma.banned.findMany({
+        where: { userId: element.id, serverId: server.id },
+      });
+
+      for (const row of bannedUsers) {
+        if (
+          row.date.getTime() + Number(row.time) * 1000 >
+          Date.now()
+        ) {
+          users.splice(users.indexOf(element.nickname), 1);
+          usersBanned.push(element);
         }
       }
+    }
 
-      //remove owner from users
-      const index = users.indexOf(owner);
+    //remove owner from users
+    const index = users.indexOf(owner);
+    if (index > -1) {
+      users.splice(index, 1);
+    }
+
+    //remove superUsers from users
+    for (const element of admins) {
+      const index = users.indexOf(element);
       if (index > -1) {
         users.splice(index, 1);
       }
-
-      //remove superUsers from users
-      for (const element of admins) {
-        const index = users.indexOf(element);
-        if (index > -1) {
-          users.splice(index, 1);
-        }
-      }
-
-      return { owner, admins, users, banned: usersBanned };
     }
 
-    async isBanned(user: User, serverName: string) {
-      const server = await this.findByName(serverName);
-      if (!server) {
-        throw new HttpException('Group not found', HttpStatus.NOT_FOUND);
-      }
+    return { owner, admins, users, banned: usersBanned };
+  }
 
-      if (!(await this.isInServer(user, serverName))) {
-        throw new HttpException('User not in group', HttpStatus.UNAUTHORIZED);
-      }
-
-      const bannedUsers = await this.prisma.banned.findMany({
-        where: { serverId: server.id },
-      });
-
-      for (const element of bannedUsers) {
-        if (
-          element.userId === user.id &&
-          element.date.getTime() + Number(element.time) * 1000 >
-            Date.now()
-        ) {
-          return true;
-        }
-      }
-      return false;
+  async isBanned(user: User, serverName: string) {
+    const server = await this.findByName(serverName);
+    if (!server) {
+      throw new HttpException('Group not found', HttpStatus.NOT_FOUND);
     }
 
-    async removeRoleServer(serverName: string, nickname: string, role: Role) : Promise<boolean> {
-      const userProfile = await this.userService.findOneByNickname(nickname);
-      if (!userProfile) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-      }
-      if(!(await this.isRole(nickname, role))) {
-        return false
-      }
-      await this.prisma.user.update({
-        where: {nickname : nickname}, 
-        data: {roles: {disconnect: role}}
-      })
-      return true
+    if (!(await this.isInServer(user, serverName))) {
+      throw new HttpException('User not in group', HttpStatus.UNAUTHORIZED);
     }
 
-    async addRoleServer(serverName: string, nickname: string, role: Role) : Promise<boolean> {
-      const userProfile = await this.userService.findOneByNickname(nickname);
-      if (!userProfile) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    const bannedUsers = await this.prisma.banned.findMany({
+      where: { serverId: server.id },
+    });
+
+    for (const element of bannedUsers) {
+      if (
+        element.userId === user.id &&
+        element.date.getTime() + Number(element.time) * 1000 >
+          Date.now()
+      ) {
+        return true;
       }
-      if(await this.isRole(nickname, role)) {
-        return false
-      }
-      await this.prisma.user.update({
-        where: {nickname : nickname}, 
-        data: {roles: {connect: role}}
-      })
-      return true
     }
-    async isRole(nickname: string, role: Role) : Promise<boolean> {
-      const user = await this.userService.findOneByNickname(nickname)
-      const roles = await this.prisma.user.findUnique({where: {id: user.id}}).roles()
-      for (const element of roles) {
-        if (element.id === role.id) {
-          return true
-        }
-      }
+    return false;
+  }
+
+  async removeRoleServer(serverName: string, nickname: string, role: Role) : Promise<boolean> {
+    const userProfile = await this.userService.findOneByNickname(nickname);
+    if (!userProfile) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    if(!(await this.isRole(nickname, role))) {
       return false
     }
-    async remove(id: number) {
-      this.prisma.server.delete({where: {id}})
+    await this.prisma.user.update({
+      where: {nickname : nickname}, 
+      data: {roles: {disconnect: role}}
+    })
+    return true
+  }
+
+  async addRoleServer(serverName: string, nickname: string, role: Role) : Promise<boolean> {
+    const userProfile = await this.userService.findOneByNickname(nickname);
+    if (!userProfile) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
-    async update(name: string, server: { id: number; nom: string; ownerId: number; }) {
-      this.prisma.server.update({where: {nom: name}, data: server})
+    if(await this.isRole(nickname, role)) {
+      return false
     }
-    async isOwner(userProfile: User, name: string) : Promise<boolean>{
-      return this.prisma.server.findFirst({where: {nom: name}}).then((server) => {
-        return server.ownerId === userProfile.id
-      })
+    await this.prisma.user.update({
+      where: {nickname : nickname}, 
+      data: {roles: {connect: role}}
+    })
+    return true
+  }
+  async isRole(nickname: string, role: Role) : Promise<boolean> {
+    const user = await this.userService.findOneByNickname(nickname)
+    const roles = await this.prisma.user.findUnique({where: {id: user.id}}).roles()
+    for (const element of roles) {
+      if (element.id === role.id) {
+        return true
+      }
     }
-    async isInServer(userProfile: User, name: string) : Promise<boolean>{
-      return this.prisma.server.findFirst({where: {nom: name}}).users().then((users) => {
-        return users.some((element) => element.id === userProfile.id)
-      })
-    }
-    async findServersByUserId(id: any) : Promise<Server[]> {
-      return this.prisma.server.findMany({where: {users: {some: {id}}}})
-    }
+    return false
+  }
+  async remove(id: number) {
+    this.prisma.server.delete({where: {id}})
+  }
+  async update(name: string, server: { id: number; nom: string; ownerId: number; }) {
+    this.prisma.server.update({where: {nom: name}, data: server})
+  }
+  async isOwner(userProfile: User, name: string) : Promise<boolean>{
+    return this.prisma.server.findFirst({where: {nom: name}}).then((server) => {
+      return server.ownerId === userProfile.id
+    })
+  }
+  async isInServer(userProfile: User, name: string) : Promise<boolean>{
+    return this.prisma.server.findFirst({where: {nom: name}}).users().then((users) => {
+      return users.some((element) => element.id === userProfile.id)
+    })
+  }
+  async findServersByUserId(id: any) : Promise<Server[]> {
+    return this.prisma.server.findMany({where: {users: {some: {id}}}})
+  }
 }
