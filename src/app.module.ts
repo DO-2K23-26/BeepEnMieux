@@ -10,6 +10,7 @@ import { UsersModule } from './users/users.module';
 import { AppController } from './app.controller';
 import { ServerController } from './server/server.controller';
 import { ServerModule } from './server/server.module';
+import { ChannelModule } from './channel/channel.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ServerModule } from './server/server.module';
       },
     }),
     ServerModule,
+    ChannelModule,
   ],
   providers: [PrismaService],
   controllers: [AppController, ServerController],
