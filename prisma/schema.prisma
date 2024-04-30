@@ -16,9 +16,13 @@ datasource db {
 model User {
   id               Int        @id @default(autoincrement())
   email            String     @unique
-  nickname         String     @unique
-  password         String
-  socketId         String?
+  username         String     @unique
+  firstname        String
+  lastname         String
+  profilePicture   String?
+  verifiedAt       DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
   messages         Message[]
   servers          Server[]   @relation("usersServer")
   serversOwned     Server[]   @relation("ownerServer")
