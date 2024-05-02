@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
-import { GroupeModule } from './groupe/groupe.module';
 import { MessageModule } from './message/message.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PrismaService } from './prisma/prisma.service';
@@ -15,7 +14,6 @@ import { ChannelModule } from './channel/channel.module';
 @Module({
   imports: [
     UsersModule,
-    GroupeModule,
     MessageModule,
     AuthModule,
     ChatModule,
@@ -35,7 +33,7 @@ import { ChannelModule } from './channel/channel.module';
     ChannelModule,
   ],
   providers: [PrismaService],
-  controllers: [AppController, ServerController],
+  controllers: [AppController],
   exports: [PrismaService],
 })
 export class AppModule {}

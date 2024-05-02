@@ -10,8 +10,9 @@ import {
   Req,
 } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
-import { GroupeService } from 'src/groupe/groupe.service';
+import { ChannelService } from 'src/channel/channel.service';
 import { UsersService } from 'src/users/users.service';
+import { ServerService } from 'src/server/server.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { MessageService } from './message.service';
@@ -23,7 +24,9 @@ export class MessageController {
     private readonly messageService: MessageService,
     private readonly authService: AuthService,
     private readonly userService: UsersService,
-    private readonly groupeService: GroupeService,
+    private readonly channelService: ChannelService,
+    private readonly serverService: ServerService,
+
   ) {}
 
   @Post()
@@ -33,12 +36,13 @@ export class MessageController {
 
   @Get(':id')
   async findOne(@Param('id') id: number, @Req() request: Request) {
-    // check if user is in groupe
+    // check if user is in server
     const user = request['user'];
     const message = await this.messageService.findOne(id);
-    const groupe = await this.groupeService.findGroupesById(message.groupeId);
+    const channel = await this.channelService.findOne(message.channelId);
+    const server = await this.channelService.findServerByChannelId(channel.id);
 
-    if ((await this.userService.isInGroupe(user, groupe)) === false) {
+    if ((await this.userService.isInServer(user, server)) === false) {
       throw new HttpException('Unauthorized', 401);
     }
 
@@ -49,14 +53,14 @@ export class MessageController {
     return message;
   }
 
-  @Get('groupe/:id')
+  @Get('channel/:id')
   async findAllByGroup(@Param('id') id: string, @Req() request: Request) {
     const userProfile = request['user'];
-    const groupe = await this.groupeService.findByName(id);
-    if ((await this.userService.isInGroupe(userProfile, groupe)) === false) {
+    const server = await this.serverService.findByName(id);
+    if ((await this.userService.isInServer(userProfile, server)) === false) {
       throw new HttpException('Unauthorized', 401);
     }
-    if (await this.groupeService.isTimeOut(userProfile, id)) {
+    if (await this.channelService.isTimeOut(userProfile, id)) {
       throw new HttpException('User is timed out', 401);
     }
     return this.messageService.findAllByGroup(id);
@@ -84,8 +88,8 @@ export class MessageController {
       author: {
         connect: { id: updateMessageDto.author.id },
       },
-      groupe: {
-        connect: { id: updateMessageDto.groupe.id },
+      channel: {
+        connect: { id: updateMessageDto.channel.id },
       },
     };
     return this.messageService.update(id, messageUpdateInput);

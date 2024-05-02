@@ -14,8 +14,8 @@ export class MessageService {
         author: {
           connect: { id: message.author.id },
         },
-        groupe: {
-          connect: { id: message.groupe.id },
+        channel: {
+          connect: { id: message.channel.id },
         },
       },
     });
@@ -41,17 +41,17 @@ export class MessageService {
   }
 
   async findAllByGroup(nom: string) {
-    const groupe = await this.prisma.groupe.findUnique({ where: { nom } });
+    const channel = await this.prisma.channel.findUnique({ where: { nom: nom } });
     return this.prisma.message
       .findMany({
-        where: { groupeId: groupe.id },
+        where: { channelId: channel.id },
         orderBy: { timestamp: 'asc' },
         select: {
           id: true,
           contenu: true,
           timestamp: true,
           authorId: true,
-          groupeId: false,
+          channelId: false,
         },
       })
       .then((messages) =>
@@ -63,7 +63,7 @@ export class MessageService {
             return {
               contenu: message.contenu,
               timestamp: message.timestamp.toString(),
-              author: author.nickname,
+              author: author.username,
               id: message.id,
             };
           }),

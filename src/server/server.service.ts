@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Role, Server, User } from '@prisma/client';
+import { Server, User, Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UsersService } from 'src/users/users.service';
 
@@ -48,11 +48,11 @@ export class ServerService {
     const users_draft = await this.prisma.server
       .findUnique({ where: { nom: name } })
       .users();
-    const users = users_draft.map((user) => user.nickname);
+    const users = users_draft.map((user) => user.username);
 
     const owner = (
       await this.prisma.server.findUnique({ where: { nom: name } }).owner()
-    ).nickname;
+    ).username;
 
     // Get superUser of the group
     const roles_draft = await this.prisma.server
@@ -61,7 +61,7 @@ export class ServerService {
     let admins : string[] = []
     await Promise.all(roles_draft.map(async (role) => {
       if (role.isAdmin) {
-        this.prisma.user.findMany({where: role}).then((users) => users.forEach((elem) => {admins.fill(elem.nickname)}))
+        this.prisma.user.findMany({where: role}).then((users) => users.forEach((elem) => {admins.fill(elem.username)}))
       }
     }));
 
@@ -77,7 +77,7 @@ export class ServerService {
           row.date.getTime() + Number(row.time) * 1000 >
           Date.now()
         ) {
-          users.splice(users.indexOf(element.nickname), 1);
+          users.splice(users.indexOf(element.username), 1);
           usersBanned.push(element);
         }
       }
@@ -135,7 +135,7 @@ export class ServerService {
       return false
     }
     await this.prisma.user.update({
-      where: {nickname : nickname}, 
+      where: {username : nickname}, 
       data: {roles: {disconnect: role}}
     })
     return true
@@ -150,7 +150,7 @@ export class ServerService {
       return false
     }
     await this.prisma.user.update({
-      where: {nickname : nickname}, 
+      where: {username : nickname}, 
       data: {roles: {connect: role}}
     })
     return true
