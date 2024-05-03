@@ -76,7 +76,7 @@ export class ServerController {
     @Param('user') nickname: string,
   ) {
     const userProfile = request['user'];
-    const user = await this.userService.findOneByNickname(nickname);
+    const user = await this.userService.findOneByUsername(nickname);
     if (
       //TODO IL FAUT RAJOUTER CHECK DE PERMISSION PAR ROLE
       !(await this.serverService.isOwner(userProfile, serverName)) &&
