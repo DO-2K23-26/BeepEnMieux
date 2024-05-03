@@ -18,6 +18,17 @@ Buid image:
     paths:
       - node_modules/
 
+Build helm chart:
+  tags:
+    - shell
+  stage: build
+  script:
+    - helm lint helm/beepenmieux
+    - helm package helm/beepenmieux
+  artifacts:
+    paths:
+      - '*.tgz'
+
 Static Code Analysis:
   tags:
     - docker
@@ -39,21 +50,6 @@ Dependency Security Scan:
     - npm audit
   needs:
     - Buid image
-
-Build helm chart:
-  tags:
-    - shell
-  stage: build
-  script:
-    - helm lint helm/beepenmieux
-    - helm package helm/beepenmieux
-  artifacts:
-    paths:
-      - '*.tgz'
-  needs:
-    - Buid image
-    - Static Code Analysis
-    - Dependency Security Scan
 
 Store docker image:
   tags:
@@ -97,5 +93,9 @@ pages:
   only:
     - main
   needs:
-    - Dependency Security Scan
+    - Buid image
+    - Build helm chart
     - Static Code Analysis
+    - Dependency Security Scan
+    - Store docker image
+    - Store helm chart
