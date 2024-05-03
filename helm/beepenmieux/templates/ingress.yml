@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: beepenmieux
+  labels:
+    project: beep
+    app: beepenmieux
+    role: backend
+spec:
+  tls:
+  - secretName: beepenmieux-tls
+    hosts:
+      - apitest.beep.gay
+  rules:
+  - host: apitest.beep.gay
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: beepenmieux
+            port: 
+              number: 8080

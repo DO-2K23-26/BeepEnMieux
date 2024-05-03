@@ -1,0 +1,13 @@
+# Default values for beepenmieux.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+postgresql:
+  enabled: true
+  auth:
+    enablePostgresUser: true
+    database: "beep_db"
+
+postgresUser: "postgres"
+
+replicaCount: 1

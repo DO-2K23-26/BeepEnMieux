@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beepenmieux
+  labels:
+    project: beep
+    app: beepenmieux
+    role: backend
+spec:
+  selector:
+    matchLabels:
+      project: beep
+      app: beepenmieux
+      role: backend
+  template:
+    metadata:
+      labels:
+        project: beep
+        app: beepenmieux
+        role: backend
+    spec:
+      containers:
+        - name: beepenmieux
+          image: gitlab.polytech.umontpellier.fr:5050/pluff/beepenmieux:dev
+          env:
+            - name: DB_URL
+              value: {{ .Release.Name }}-postgresql:5432
+            - name: DB_USER
+              value: {{ .Values.postgresUser }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-postgresql
+                  key: postgres-password     
+            - name: DB_NAME
+              value: {{ .Values.postgresql.auth.database }}       
+            - name: PORT
+              value: '9644'
+          resources:
+            limits:
+              memory: '2Gi'
+              cpu: '500m'
+          ports:
+            - containerPort: 9644
+              protocol: TCP
+      imagePullSecrets:
+        - name: pluff-registry-credentials
