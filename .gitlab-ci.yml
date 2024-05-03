@@ -47,12 +47,8 @@ Store image:
   stage: store
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:latest
-    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
-    - docker push ${CI_REGISTRY_IMAGE}:latest
-    - docker push ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
-  only:
-    - main
+    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:dev
+    - docker push ${CI_REGISTRY_IMAGE}:dev
   needs:
     - Dependency Security Scan
     - Static Code Analysis
@@ -76,17 +72,17 @@ pages:
 
 Deploy to Production:
   tags:
-    - docker
-  image: ilyasemenov/gitlab-ci-git-push
+    - shell
   stage: deploy
   when: manual
-  environment:
-    name: production
-    url: http://localhost:9644
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:latest
+    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${CI_REGISTRY_IMAGE}:latest
+    - docker push ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
   only:
     - main
-  script:
-    - git-push ssh://dokku@162.38.112.145:22/beepenmieux
   needs:
     - Dependency Security Scan
     - Static Code Analysis
