@@ -20,7 +20,6 @@ model User {
   firstname        String
   lastname         String
   password         String
-  socketId         String
   profilePicture   String?
   verifiedAt       DateTime?
   createdAt        DateTime   @default(now())

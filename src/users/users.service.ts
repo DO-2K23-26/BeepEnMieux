@@ -15,24 +15,6 @@ export class UsersService {
     return await this.prisma.user.findFirst({ where: { email: author } });
   }
 
-  async removeSocketId(id: string) {
-    await this.prisma.user.updateMany({
-      where: { socketId: id },
-      data: {
-        socketId: null,
-      },
-    });
-  }
-
-  async addSocketId(user: User, id: string) {
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        socketId: id,
-      },
-    });
-  }
-
   async findOneById(
     id: number,
   ): Promise<{ message: string; user: User | null }> {
@@ -60,18 +42,6 @@ export class UsersService {
       data: {
         users: {
           connect: { id: user.id },
-        },
-      },
-    });
-  }
-
-  async findServersByUserSocketId(socketId: string): Promise<Server[]> {
-    return this.prisma.server.findMany({
-      where: {
-        users: {
-          some: {
-            socketId,
-          },
         },
       },
     });
