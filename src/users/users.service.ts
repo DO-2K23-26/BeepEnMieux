@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Groupe, Prisma, User } from '@prisma/client';
+import { Prisma, User, Server } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -8,8 +8,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOneByNickname(nickname: string): Promise<User | null> {
-    return this.prisma.user.findFirst({ where: { nickname } });
+  async findOneByNickname(username: string): Promise<User | null> {
+    return this.prisma.user.findFirst({ where: { username: username } });
   }
   async findByEmail(author: string) {
     return await this.prisma.user.findFirst({ where: { email: author } });
@@ -54,9 +54,9 @@ export class UsersService {
     return user;
   }
 
-  async addUserToGroupe(groupeName: string, user: User): Promise<void> {
-    await this.prisma.groupe.update({
-      where: { nom: groupeName },
+  async addUserToServer(serverName: string, user: User): Promise<void> {
+    await this.prisma.server.update({
+      where: { nom: serverName },
       data: {
         users: {
           connect: { id: user.id },
@@ -65,8 +65,8 @@ export class UsersService {
     });
   }
 
-  async findGroupesByUserSocketId(socketId: string): Promise<Groupe[]> {
-    return this.prisma.groupe.findMany({
+  async findServersByUserSocketId(socketId: string): Promise<Server[]> {
+    return this.prisma.server.findMany({
       where: {
         users: {
           some: {
@@ -77,8 +77,8 @@ export class UsersService {
     });
   }
 
-  async findGroupesByUserId(id: number): Promise<Groupe[]> {
-    return this.prisma.groupe.findMany({
+  async findServersByUserId(id: number): Promise<Server[]> {
+    return this.prisma.server.findMany({
       where: {
         users: {
           some: {
@@ -91,8 +91,10 @@ export class UsersService {
 
   async create(
     email: string,
-    nickname: string,
+    username: string,
     password: string,
+    lastname: string,
+    firstname: string,
   ): Promise<Omit<User, 'password'> | null> {
     // Check if user already exists
     const existingUser = await this.prisma.user.findUnique({
@@ -105,10 +107,10 @@ export class UsersService {
       );
     }
 
-    // Check if email, nickname and password are provided
-    if (!email || !nickname || !password) {
+    // Check if email, username and password are provided
+    if (!email || !username || !password) {
       throw new HttpException(
-        'Email, nickname and password are required',
+        'Email, username and password are required',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -118,8 +120,10 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(password, saltOrRounds);
     const user: Prisma.UserCreateInput = {
       email,
-      nickname,
+      username,
       password: hashedPassword,
+      firstname: firstname,
+      lastname: lastname
     };
 
     const result = await this.prisma.user.create({
@@ -166,14 +170,14 @@ export class UsersService {
       }
     }
 
-    // Vérifier si le nickname est déjà utilisé
-    if (updateUserDto.nickname) {
+    // Vérifier si le username est déjà utilisé
+    if (updateUserDto.username) {
       const existingUser = await this.prisma.user.findUnique({
-        where: { nickname: updateUserDto.nickname },
+        where: { username: updateUserDto.username },
       });
       if (existingUser && existingUser.id !== id) {
         throw new HttpException(
-          'User with nickname: ' + updateUserDto.nickname + ' already exists',
+          'User with username: ' + updateUserDto.username + ' already exists',
           HttpStatus.NOT_FOUND,
         );
       }
@@ -215,13 +219,13 @@ export class UsersService {
     return deleteUser;
   }
 
-  async isInGroupe(user: User, groupe: Groupe): Promise<boolean> {
-    if (!user || !groupe) {
+  async isInServer(user: User, server: Server): Promise<boolean> {
+    if (!user || !server) {
       return false;
     }
-    const groupes = await this.prisma.user
+    const servers = await this.prisma.user
       .findUnique({ where: { id: user.id } })
-      .groupes();
-    return groupes.some((g) => g.id === groupe.id);
+      .servers();
+    return servers.some((g) => g.id === server.id);
   }
 }

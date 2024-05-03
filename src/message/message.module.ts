@@ -3,11 +3,12 @@ import { MessageService } from './message.service';
 import { MessageController } from './message.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { AuthModule } from 'src/auth/auth.module';
-import { GroupeModule } from 'src/groupe/groupe.module';
+import { ChannelModule } from 'src/channel/channel.module';
 import { UsersModule } from 'src/users/users.module';
+import { ServerModule } from 'src/server/server.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, GroupeModule, UsersModule],
+  imports: [PrismaModule, AuthModule, ChannelModule, UsersModule, ServerModule],
   controllers: [MessageController],
   providers: [MessageService],
   exports: [MessageService],

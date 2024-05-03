@@ -16,7 +16,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { UsersService } from '../users/users.service';
 import { Message } from '@prisma/client';
-import { GroupeService } from 'src/groupe/groupe.service';
+import { ChannelService } from 'src/channel/channel.service';
 import { AuthService } from 'src/auth/auth.service';
 import { MessageService } from 'src/message/message.service';
 
@@ -28,7 +28,7 @@ import { MessageService } from 'src/message/message.service';
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private userService: UsersService,
-    private groupeService: GroupeService,
+    private channelService: ChannelService,
     private authService: AuthService,
     private messageService: MessageService,
   ) {}
@@ -51,36 +51,36 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.log(`Invalid author`);
       throw new WsException('Invalid author');
     }
-    const groupeName = Array.from(client.rooms)[1];
-    if (!groupeName) {
+    const channelName = Array.from(client.rooms)[1];
+    if (!channelName) {
       this.logger.log(`Client is not in a room`);
       throw new WsException('Client is not in a room');
     }
-    const isTimedOut = await this.groupeService.isTimeOut(author, groupeName);
+    const isTimedOut = await this.channelService.isTimeOut(author, channelName);
     if (isTimedOut) {
       this.logger.log(`User is timed out`);
       throw new WsException('User is timed out');
     }
 
-    const groupe = await this.groupeService.findByName(groupeName);
+    const channel = await this.channelService.findByName(channelName);
 
     const retour = {
       contenu: (await data).contenu,
       timestamp: (await data).timestamp,
-      author: author.nickname,
+      author: author.username,
       id: null,
     };
     const message: any = {
       contenu: (await data).contenu,
       author: author,
-      groupe: groupe,
+      channel: channel,
 
       timestamp: (await data).timestamp,
     };
     const messageStocked = await this.messageService.create(message);
     retour.id = messageStocked.id;
-    this.server.to(groupe.nom).emit('chat', retour); // broadcast messages
-    this.logger.log(`Message sent to ${groupe.nom}`);
+    this.server.to(channel.nom).emit('chat', retour); // broadcast messages
+    this.logger.log(`Message sent to ${channel.nom}`);
     return message;
   }
 
@@ -96,8 +96,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.log(`Invalid author`);
       throw new WsException('Invalid author');
     }
-    const groupeName = Array.from(client.rooms)[1];
-    if (!groupeName) {
+    const channelName = Array.from(client.rooms)[1];
+    if (!channelName) {
       this.logger.log(`Client is not in a room`);
       throw new WsException('Client is not in a room');
     }
@@ -111,9 +111,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       id: (await data).id,
       contenu: (await data).contenu,
     };
-    const groupe = await this.groupeService.findByName(groupeName);
+    const channel = await this.channelService.findByName(channelName);
     this.messageService.updateContenu((await data).id, (await data).contenu);
-    this.server.to(groupe.nom).emit('edit', retour); // broadcast messages
+    this.server.to(channel.nom).emit('edit', retour); // broadcast messages
   }
 
   @SubscribeMessage('delete')
@@ -127,8 +127,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.log(`Invalid author`);
       throw new WsException('Invalid author');
     }
-    const groupeName = Array.from(client.rooms)[1];
-    if (!groupeName) {
+    const channelName = Array.from(client.rooms)[1];
+    if (!channelName) {
       this.logger.log(`Client is not in a room`);
       throw new WsException('Client is not in a room');
     }
@@ -138,39 +138,39 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.log(`User is not the author`);
       throw new WsException('User is not the author');
     }
-    const groupe = await this.groupeService.findByName(groupeName);
+    const channel = await this.channelService.findByName(channelName);
     this.messageService.remove((await data).id);
-    this.server.to(groupe.nom).emit('delete', (await data).id); // broadcast messages
+    this.server.to(channel.nom).emit('delete', (await data).id); // broadcast messages
   }
 
   @SubscribeMessage('join_room')
   async handleSetClientDataEvent(client: Socket, data: string) {
     console.log('join_room');
     //leave all rooms
-    const groupes = await this.userService.findGroupesByUserSocketId(client.id);
-    const groupesNames = groupes.map((groupe) => groupe.nom);
-    for (const groupe of groupesNames) {
-      client.leave(groupe);
+    const channels = await this.userService.findServersByUserSocketId(client.id);
+    const channelsNames = channels.map((channel) => channel.nom);
+    for (const channel of channelsNames) {
+      client.leave(channel);
     }
 
-    //verify user and groupe
+    //verify user and channel
     const token = client.handshake.auth.token;
     const user = (await this.authService.infoUser(token))?.user;
-    const groupe = await this.groupeService.findByName(data);
-    const groupeName = groupe.nom;
-    //exception if user or groupe is invalid
-    if (!user || !groupe) {
-      throw new WsException('Invalid user or groupe');
+    const channel = await this.channelService.findByName(data);
+    const channelName = channel.nom;
+    //exception if user or channel is invalid
+    if (!user || !channel) {
+      throw new WsException('Invalid user or channel');
     }
 
-    if (!groupesNames.includes(groupeName)) {
-      throw new WsException('User not in groupe');
+    if (!channelsNames.includes(channelName)) {
+      throw new WsException('User not in channel');
     }
 
     //join room
     if (user.socketId) {
-      this.logger.log(`${user.socketId} is joining ${groupe.nom}`);
-      client.join(groupe.nom);
+      this.logger.log(`${user.socketId} is joining ${channel.nom}`);
+      client.join(channel.nom);
     }
   }
 
@@ -188,9 +188,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleDisconnect(socket: Socket): Promise<void> {
     this.userService.removeSocketId(socket.id);
-    const groupes = await this.userService.findGroupesByUserSocketId(socket.id);
-    for (const groupe of groupes) {
-      socket.leave(groupe.nom);
+    const channels = await this.userService.findServersByUserSocketId(socket.id);
+    for (const channel of channels) {
+      socket.leave(channel.nom);
     }
     this.logger.log(`Socket disconnected: ${socket.id}`);
   }

@@ -16,44 +16,80 @@ datasource db {
 model User {
   id               Int        @id @default(autoincrement())
   email            String     @unique
-  nickname         String     @unique
+  username         String     @unique
+  firstname        String
+  lastname         String
   password         String
-  socketId         String?
+  socketId         String
+  profilePicture   String?
+  verifiedAt       DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
   messages         Message[]
-  groupes          Groupe[]   @relation("usersGroupe")
-  groupesSuperUser Groupe[]   @relation("superUsersGroupe")
-  Groupe           Groupe[]
-  TimedOut         TimedOut[]
+  servers          Server[]   @relation("usersServer")
+  serversOwned     Server[]   @relation("ownerServer")
+  timedouts        TimedOut[]
+  banned           Banned[]
+  roles            Role[]
 }
 
-model Groupe {
+model Channel {
   id         Int        @id @default(autoincrement())
   nom        String     @unique
   messages   Message[]
-  users      User[]     @relation("usersGroupe")
-  owner      User       @relation(fields: [ownerId], references: [id])
-  ownerId    Int
-  superUsers User[]     @relation("superUsersGroupe")
-  TimedOut   TimedOut[]
+  timedouts  TimedOut[]
+  server     Server     @relation(fields: [serverId], references: [id])
+  serverId   Int
 }
 
-model Message {
-  id        Int    @id @default(autoincrement())
-  contenu   String
-  author    User   @relation(fields: [authorId], references: [id])
-  authorId  Int
-  groupe    Groupe @relation(fields: [groupeId], references: [id])
-  groupeId  Int
-  timestamp BigInt
+model Server {
+  id         Int        @id @default(autoincrement())
+  nom        String     @unique
+  channels   Channel[]
+  users      User[]     @relation("usersServer")
+  owner      User       @relation("ownerServer", fields: [ownerId], references: [id])
+  ownerId    Int
+  banned     Banned[]   @relation("bannedServer")
+  roles      Role[]
 }
 
 model TimedOut {
-  userId  Int
-  groupId Int
-  date    DateTime @default(now())
-  reason  String
-  time    String
-  user    User     @relation(fields: [userId], references: [id])
-  group   Groupe   @relation(fields: [groupId], references: [id])
-  @@id([userId, groupId])
+  userId     Int
+  channelId  Int
+  date       DateTime @default(now())
+  reason     String
+  time       String
+  user       User      @relation(fields: [userId], references: [id])
+  channel    Channel   @relation(fields: [channelId], references: [id])
+  @@id([userId, channelId])
+}
+
+model Banned {
+  userId     Int
+  serverId   Int
+  date       DateTime @default(now())
+  reason     String
+  time       String
+  user       User      @relation(fields: [userId], references: [id])
+  server     Server    @relation("bannedServer", fields: [serverId], references: [id])
+  @@id([userId, serverId])
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  contenu    String
+  author     User     @relation(fields: [authorId], references: [id])
+  authorId   Int
+  channel    Channel  @relation(fields: [channelId], references: [id])
+  channelId  Int
+  timestamp  DateTime @default(now())
+}
+
+model Role {
+  id         Int      @id @default(autoincrement())
+  nom        String
+  server     Server     @relation(fields: [serverId], references: [id])
+  serverId   Int  
+  users      User[]
+  isAdmin    Boolean
 }

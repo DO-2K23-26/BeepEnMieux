@@ -13,6 +13,7 @@ import { User } from '@prisma/client';
 import { Public } from 'src/app.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
+import { first } from 'rxjs';
 @Controller('user')
 export class UsersController {
   constructor(
@@ -26,8 +27,10 @@ export class UsersController {
     @Body('password') password: string,
     @Body('email') email: string,
     @Body('nickname') nickname: string,
+    @Body('lastname') lastname: string,
+    @Body('firstname') firstname: string,
   ): Promise<Omit<User, 'password'>> {
-    const user = await this.usersService.create(email, nickname, password);
+    const user = await this.usersService.create(email, nickname, password, lastname, firstname);
     return user;
   }
 
