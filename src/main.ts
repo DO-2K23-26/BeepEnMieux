@@ -9,6 +9,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   dotenv.config();
+  const port = process.env.PORT || 9644;
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
@@ -16,6 +17,6 @@ async function bootstrap() {
   );
   app.useLogger(app.get(Logger));
   app.enableCors();
-  await app.listen(9644, '0.0.0.0');
+  await app.listen(port, '0.0.0.0');
 }
 bootstrap();
