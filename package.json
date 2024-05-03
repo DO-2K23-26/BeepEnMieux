@@ -11,7 +11,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "echo DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@${DB_URL}/${DB_NAME} && DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@${DB_URL}/${DB_NAME} npx prisma migrate deploy && node dist/main",
+    "start:prod": "DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@${DB_URL}/${DB_NAME} npx prisma migrate deploy && node dist/main",
     "docs": "compodoc -p tsconfig.json -d public",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "lint-no-fix": "eslint \"{src,apps,libs,test}/**/*.ts\"",
