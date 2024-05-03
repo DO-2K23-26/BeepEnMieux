@@ -27,14 +27,14 @@ spec:
             - name: DB_URL
               value: {{ .Release.Name }}-postgresql:5432
             - name: DB_USER
-              value: {{ .Values.postgresUser }}
+              value: postgres
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ .Release.Name }}-postgresql
-                  key: postgres-password     
+                  key: postgres-password
             - name: DB_NAME
-              value: {{ .Values.postgresql.auth.database }}       
+              value: beep-db
             - name: PORT
               value: '9644'
           resources:
