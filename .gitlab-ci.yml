@@ -9,8 +9,6 @@ variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
 
 Buid image:
-  tags:
-    - shell
   stage: build
   script:
     - docker build --cache-from $IMAGE_TAG -t $IMAGE_TAG .
@@ -20,8 +18,6 @@ Buid image:
       - node_modules/
 
 Static Code Analysis:
-  tags:
-    - docker
   image: node:latest
   stage: test
   script:
@@ -33,8 +29,6 @@ Static Code Analysis:
 Dependency Security Scan:
   stage: test
   image: node:latest
-  tags:
-    - docker
   script:
     - npm install
     - npm audit
@@ -42,8 +36,6 @@ Dependency Security Scan:
     - Buid image
 
 Store image:
-  tags:
-    - shell
   stage: store
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -58,8 +50,6 @@ Store image:
     - Static Code Analysis
 
 pages:
-  tags:
-    - docker
   stage: documentation
   image: node:latest
   script:
@@ -75,8 +65,6 @@ pages:
   - Static Code Analysis
 
 Deploy to Production:
-  tags:
-    - docker
   image: ilyasemenov/gitlab-ci-git-push
   stage: deploy
   when: manual
