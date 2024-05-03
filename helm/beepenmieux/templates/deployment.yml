@@ -22,6 +22,7 @@ spec:
       containers:
         - name: beepenmieux
           image: gitlab.polytech.umontpellier.fr:5050/pluff/beepenmieux:dev
+          pullPolicy: Always
           env:
             - name: DB_URL
               value: {{ .Release.Name }}-postgresql:5432
