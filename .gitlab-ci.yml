@@ -10,6 +10,7 @@ variables:
 
 Buid image:
   stage: build
+  image: docker:latest
   script:
     - docker build --cache-from $IMAGE_TAG -t $IMAGE_TAG .
   cache:
@@ -37,6 +38,7 @@ Dependency Security Scan:
 
 Store image:
   stage: store
+  image: docker:latest
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:latest
