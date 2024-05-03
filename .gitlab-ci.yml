@@ -7,27 +7,11 @@ stages:
 
 variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-  DOCKER_HOST: tcp://docker:2376
-  DOCKER_TLS_CERTDIR: "/certs"
-  DOCKER_TLS_VERIFY: 1
-  DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
-
-
-# build:
-#   stage: build
-#   image:
-#     name: gcr.io/kaniko-project/executor:v1.14.0-debug
-#     entrypoint: [""]
-#   script:
-#   - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-#   - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
-#   - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:latest
 
 Buid image:
+  tags:
+    - shell
   stage: build
-  image: docker:24.0.5
-  services:
-    - docker:24.0.5-dind
   script:
     - docker build --cache-from $IMAGE_TAG -t $IMAGE_TAG .
   cache:
@@ -35,67 +19,74 @@ Buid image:
     paths:
       - node_modules/
 
-# Static Code Analysis:
-#   image: node:latest
-#   stage: test
-#   script:
-#     - npm install
-#     - npm run lint-no-fix
-#   needs:
-#     - Buid image
+Static Code Analysis:
+  tags:
+    - docker
+  image: node:latest
+  stage: test
+  script:
+    - npm install
+    - npm run lint-no-fix
+  needs:
+    - Buid image
 
-# Dependency Security Scan:
-#   stage: test
-#   image: node:latest
-#   script:
-#     - npm install
-#     - npm audit
-#   needs:
-#     - Buid image
+Dependency Security Scan:
+  stage: test
+  image: node:latest
+  tags:
+    - docker
+  script:
+    - npm install
+    - npm audit
+  needs:
+    - Buid image
 
-# Store image:
-#   stage: store
-#   image: docker:24.0.5
-#   services:
-#     - docker:24.0.5-dind
-#   script:
-#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#     - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:latest
-#     - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
-#     - docker push ${CI_REGISTRY_IMAGE}:latest
-#     - docker push ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
-#   only:
-#     - main
-#   needs:
-#     - Dependency Security Scan
-#     - Static Code Analysis
+Store image:
+  tags:
+    - shell
+  stage: store
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:latest
+    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${CI_REGISTRY_IMAGE}:latest
+    - docker push ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
+  only:
+    - main
+  needs:
+    - Dependency Security Scan
+    - Static Code Analysis
 
-# pages:
-#   stage: documentation
-#   image: node:latest
-#   script:
-#     - npm install
-#     - npm run docs
-#   artifacts:
-#     paths:
-#       - public
-#   only:
-#     - main
-#   needs:
-#   - Dependency Security Scan
-#   - Static Code Analysis
+pages:
+  tags:
+    - docker
+  stage: documentation
+  image: node:latest
+  script:
+    - npm install
+    - npm run docs
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+  needs:
+  - Dependency Security Scan
+  - Static Code Analysis
 
-# Deploy to Production:
-#   image: ilyasemenov/gitlab-ci-git-push
-#   stage: deploy
-#   when: manual
-#   environment:
-#     name: production
-#     url: http://localhost:9644
-#   only:
-#     - main
-#   script:
-#     - git-push ssh://dokku@162.38.112.145:22/beepenmieux
-#   needs:
-#     - Dependency Security Scan
-#     - Static Code Analysis
+Deploy to Production:
+  tags:
+    - docker
+  image: ilyasemenov/gitlab-ci-git-push
+  stage: deploy
+  when: manual
+  environment:
+    name: production
+    url: http://localhost:9644
+  only:
+    - main
+  script:
+    - git-push ssh://dokku@162.38.112.145:22/beepenmieux
+  needs:
+    - Dependency Security Scan
+    - Static Code Analysis
