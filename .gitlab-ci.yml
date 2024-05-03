@@ -3,7 +3,6 @@ stages:
   - test
   - store
   - documentation
-  - deploy
 
 variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
@@ -41,17 +40,48 @@ Dependency Security Scan:
   needs:
     - Buid image
 
-Store image:
+Build helm chart:
+  tags:
+    - shell
+  stage: build
+  script:
+    - helm lint helm/beepenmieux
+    - helm package helm/beepenmieux
+  artifacts:
+    paths:
+      - '*.tgz'
+  needs:
+    - Buid image
+    - Static Code Analysis
+    - Dependency Security Scan
+
+Store docker image:
   tags:
     - shell
   stage: store
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:dev
+    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
     - docker push ${CI_REGISTRY_IMAGE}:dev
+    - docker push ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
   needs:
-    - Dependency Security Scan
+    - Buid image
+    - Build helm chart
     - Static Code Analysis
+    - Dependency Security Scan
+
+Store helm chart:
+  tags:
+    - shell
+  stage: store
+  script:
+    - 'curl --request POST --user gitlab-ci-token:$CI_JOB_TOKEN --form "chart=@beepenmieux-0.1.0.tgz" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/api/stable/charts"'
+  needs:
+    - Buid image
+    - Build helm chart
+    - Static Code Analysis
+    - Dependency Security Scan
 
 pages:
   tags:
@@ -64,23 +94,6 @@ pages:
   artifacts:
     paths:
       - public
-  only:
-    - main
-  needs:
-  - Dependency Security Scan
-  - Static Code Analysis
-
-Deploy to Production:
-  tags:
-    - shell
-  stage: deploy
-  when: manual
-  script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:latest
-    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
-    - docker push ${CI_REGISTRY_IMAGE}:latest
-    - docker push ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
   only:
     - main
   needs:
