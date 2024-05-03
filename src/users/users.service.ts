@@ -8,7 +8,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOneByNickname(username: string): Promise<User | null> {
+  async findOneByUsername(username: string): Promise<User | null> {
     return this.prisma.user.findFirst({ where: { username: username } });
   }
   async findByEmail(author: string) {
@@ -76,7 +76,9 @@ export class UsersService {
         HttpStatus.NOT_FOUND,
       );
     }
-
+    console.log('email', email);
+    console.log('username', username);
+    console.log('password', password);
     // Check if email, username and password are provided
     if (!email || !username || !password) {
       throw new HttpException(

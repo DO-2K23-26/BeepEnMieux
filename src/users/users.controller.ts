@@ -26,11 +26,17 @@ export class UsersController {
   async createUser(
     @Body('password') password: string,
     @Body('email') email: string,
-    @Body('nickname') nickname: string,
+    @Body('username') username: string,
     @Body('lastname') lastname: string,
     @Body('firstname') firstname: string,
   ): Promise<Omit<User, 'password'>> {
-    const user = await this.usersService.create(email, nickname, password, lastname, firstname);
+    const user = await this.usersService.create(
+      email,
+      username,
+      password,
+      lastname,
+      firstname,
+    );
     return user;
   }
 

@@ -5,41 +5,45 @@ import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class ServerService {
-  constructor (
-    private readonly prisma : PrismaService,
-    private readonly userService : UsersService,
-  ){}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userService: UsersService,
+  ) {}
   async addOrCreateServer(name: string, userProfile: User): Promise<Server> {
-      const serverExist = await this.findByName(name);
+    const serverExist = await this.findByName(name);
 
-      // If the group exists, add the user to the group else create the group
-      if (serverExist) {
-        const users = await this.findUsersByServerId(serverExist.id);
-        // Check if the user is already in the group
-        for (const element of users) {
-          if (element.id === userProfile.id) {
-            throw new HttpException(
-              'User already in the group',
-              HttpStatus.BAD_REQUEST,
-            );
-          }
+    // If the group exists, add the user to the group else create the group
+    if (serverExist) {
+      const users = await this.findUsersByServerId(serverExist.id);
+      // Check if the user is already in the group
+      for (const element of users) {
+        if (element.id === userProfile.id) {
+          throw new HttpException(
+            'User already in the group',
+            HttpStatus.BAD_REQUEST,
+          );
         }
-        return await this.prisma.server.update({
-          where: { id: serverExist.id },
-          data: { users: { connect: userProfile } },
-        });
-      } else {
-        return await this.prisma.server.create({
-          data: { nom: name, users: { connect: userProfile }, ownerId: userProfile.id },
-        });
       }
+      return await this.prisma.server.update({
+        where: { id: serverExist.id },
+        data: { users: { connect: userProfile } },
+      });
+    } else {
+      return await this.prisma.server.create({
+        data: {
+          nom: name,
+          users: { connect: userProfile },
+          ownerId: userProfile.id,
+        },
+      });
+    }
   }
 
-  async findUsersByServerId(id: any) : Promise<User[]>{
-    return this.prisma.server.findFirst({ where: {id}}).users()
+  async findUsersByServerId(id: any): Promise<User[]> {
+    return this.prisma.server.findFirst({ where: { id } }).users();
   }
 
-  async findByName(name: string) : Promise<Server> {
+  async findByName(name: string): Promise<Server> {
     return await this.prisma.server.findFirst({ where: { nom: name } });
   }
 
@@ -58,12 +62,18 @@ export class ServerService {
     const roles_draft = await this.prisma.server
       .findUnique({ where: { nom: name } })
       .roles();
-    let admins : string[] = []
-    await Promise.all(roles_draft.map(async (role) => {
-      if (role.isAdmin) {
-        this.prisma.user.findMany({where: role}).then((users) => users.forEach((elem) => {admins.fill(elem.username)}))
-      }
-    }));
+    let admins: string[] = [];
+    await Promise.all(
+      roles_draft.map(async (role) => {
+        if (role.isAdmin) {
+          this.prisma.user.findMany({ where: role }).then((users) =>
+            users.forEach((elem) => {
+              admins.fill(elem.username);
+            }),
+          );
+        }
+      }),
+    );
 
     // Check if the user is timeOut
     const usersBanned = [];
@@ -73,10 +83,7 @@ export class ServerService {
       });
 
       for (const row of bannedUsers) {
-        if (
-          row.date.getTime() + Number(row.time) * 1000 >
-          Date.now()
-        ) {
+        if (row.date.getTime() + Number(row.time) * 1000 > Date.now()) {
           users.splice(users.indexOf(element.username), 1);
           usersBanned.push(element);
         }
@@ -117,8 +124,7 @@ export class ServerService {
     for (const element of bannedUsers) {
       if (
         element.userId === user.id &&
-        element.date.getTime() + Number(element.time) * 1000 >
-          Date.now()
+        element.date.getTime() + Number(element.time) * 1000 > Date.now()
       ) {
         return true;
       }
@@ -126,62 +132,80 @@ export class ServerService {
     return false;
   }
 
-  async removeRoleServer(serverName: string, nickname: string, role: Role) : Promise<boolean> {
-    const userProfile = await this.userService.findOneByNickname(nickname);
+  async removeRoleServer(
+    serverName: string,
+    username: string,
+    role: Role,
+  ): Promise<boolean> {
+    const userProfile = await this.userService.findOneByUsername(username);
     if (!userProfile) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
-    if(!(await this.isRole(nickname, role))) {
-      return false
+    if (!(await this.isRole(username, role))) {
+      return false;
     }
     await this.prisma.user.update({
-      where: {username : nickname}, 
-      data: {roles: {disconnect: role}}
-    })
-    return true
+      where: { username: username },
+      data: { roles: { disconnect: role } },
+    });
+    return true;
   }
 
-  async addRoleServer(serverName: string, nickname: string, role: Role) : Promise<boolean> {
-    const userProfile = await this.userService.findOneByNickname(nickname);
+  async addRoleServer(
+    serverName: string,
+    username: string,
+    role: Role,
+  ): Promise<boolean> {
+    const userProfile = await this.userService.findOneByUsername(username);
     if (!userProfile) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
-    if(await this.isRole(nickname, role)) {
-      return false
+    if (await this.isRole(username, role)) {
+      return false;
     }
     await this.prisma.user.update({
-      where: {username : nickname}, 
-      data: {roles: {connect: role}}
-    })
-    return true
+      where: { username: username },
+      data: { roles: { connect: role } },
+    });
+    return true;
   }
-  async isRole(nickname: string, role: Role) : Promise<boolean> {
-    const user = await this.userService.findOneByNickname(nickname)
-    const roles = await this.prisma.user.findUnique({where: {id: user.id}}).roles()
+  async isRole(username: string, role: Role): Promise<boolean> {
+    const user = await this.userService.findOneByUsername(username);
+    const roles = await this.prisma.user
+      .findUnique({ where: { id: user.id } })
+      .roles();
     for (const element of roles) {
       if (element.id === role.id) {
-        return true
+        return true;
       }
     }
-    return false
+    return false;
   }
   async remove(id: number) {
-    this.prisma.server.delete({where: {id}})
+    this.prisma.server.delete({ where: { id } });
   }
-  async update(name: string, server: { id: number; nom: string; ownerId: number; }) {
-    this.prisma.server.update({where: {nom: name}, data: server})
+  async update(
+    name: string,
+    server: { id: number; nom: string; ownerId: number },
+  ) {
+    this.prisma.server.update({ where: { nom: name }, data: server });
   }
-  async isOwner(userProfile: User, name: string) : Promise<boolean>{
-    return this.prisma.server.findFirst({where: {nom: name}}).then((server) => {
-      return server.ownerId === userProfile.id
-    })
+  async isOwner(userProfile: User, name: string): Promise<boolean> {
+    return this.prisma.server
+      .findFirst({ where: { nom: name } })
+      .then((server) => {
+        return server.ownerId === userProfile.id;
+      });
   }
-  async isInServer(userProfile: User, name: string) : Promise<boolean>{
-    return this.prisma.server.findFirst({where: {nom: name}}).users().then((users) => {
-      return users.some((element) => element.id === userProfile.id)
-    })
+  async isInServer(userProfile: User, name: string): Promise<boolean> {
+    return this.prisma.server
+      .findFirst({ where: { nom: name } })
+      .users()
+      .then((users) => {
+        return users.some((element) => element.id === userProfile.id);
+      });
   }
-  async findServersByUserId(id: any) : Promise<Server[]> {
-    return this.prisma.server.findMany({where: {users: {some: {id}}}})
+  async findServersByUserId(id: any): Promise<Server[]> {
+    return this.prisma.server.findMany({ where: { users: { some: { id } } } });
   }
 }
