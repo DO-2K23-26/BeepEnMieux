@@ -10,7 +10,9 @@ variables:
 
 Buid image:
   stage: build
-  image: docker:24.0.5-dind
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
   script:
     - docker build --cache-from $IMAGE_TAG -t $IMAGE_TAG .
   cache:
@@ -38,7 +40,9 @@ Dependency Security Scan:
 
 Store image:
   stage: store
-  image: docker:24.0.5-dind
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:latest
