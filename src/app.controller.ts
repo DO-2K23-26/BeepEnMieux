@@ -6,6 +6,6 @@ export class AppController {
   @Public()
   @Get()
   getHello(): { message: string; version: string } {
-    return { message: 'up', version: '1.0.0' };
+    return { message: 'up', version: '0.1.0' };
   }
 }
