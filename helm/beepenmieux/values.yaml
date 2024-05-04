@@ -13,3 +13,6 @@ beepenmieux:
       credentials: pluff-registry-credentials
   db:
     realeseName: beep-db
+
+frontend:
+  url: https://beep.gay

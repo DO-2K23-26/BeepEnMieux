@@ -40,6 +40,8 @@ spec:
               value: '9644'
             - name: VERSION
               value: {{ .Chart.AppVersion }}
+            - name: FRONTEND_URL
+              value: {{ .Values.frontend.url }}
           resources:
             limits:
               memory: '2Gi'
