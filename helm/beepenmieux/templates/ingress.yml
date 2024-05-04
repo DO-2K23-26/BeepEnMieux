@@ -10,9 +10,9 @@ spec:
   tls:
   - secretName: beepenmieux-tls
     hosts:
-      - apitest.beep.gay
+      - {{ .Values.beepenmieux.network.url}}
   rules:
-  - host: apitest.beep.gay
+  - host: {{ .Values.beepenmieux.network.url}}
     http:
       paths:
       - pathType: Prefix

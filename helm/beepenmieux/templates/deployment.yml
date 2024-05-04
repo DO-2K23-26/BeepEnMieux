@@ -7,6 +7,7 @@ metadata:
     app: beepenmieux
     role: backend
 spec:
+  replicas: {{ .Values.beepenmieux.replicas }}
   selector:
     matchLabels:
       project: beep
@@ -21,17 +22,17 @@ spec:
     spec:
       containers:
         - name: beepenmieux
-          image: gitlab.polytech.umontpellier.fr:5050/pluff/beepenmieux:dev
-          imagePullPolicy: Always
+          image: {{ .Values.beepenmieux.image.repository}} : {{ .Values.beepenmieux.image.tag }}
+          imagePullPolicy: {{ .Values.beepenmieux.image.pullPolicy }}
           env:
             - name: DB_URL
-              value: {{ .Release.Name }}-postgresql:5432
+              value: beep-db-postgresql:5432
             - name: DB_USER
               value: postgres
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-postgresql
+                  name: beep-db-postgresql
                   key: postgres-password
             - name: DB_NAME
               value: beep-db
@@ -45,4 +46,4 @@ spec:
             - containerPort: 9644
               protocol: TCP
       imagePullSecrets:
-        - name: pluff-registry-credentials
+        - name: {{ .Values.beepenmieux.image.registry-credentials }}
