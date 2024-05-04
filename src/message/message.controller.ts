@@ -26,7 +26,6 @@ export class MessageController {
     private readonly userService: UsersService,
     private readonly channelService: ChannelService,
     private readonly serverService: ServerService,
-
   ) {}
 
   @Post()

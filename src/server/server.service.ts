@@ -62,7 +62,7 @@ export class ServerService {
     const roles_draft = await this.prisma.server
       .findUnique({ where: { nom: name } })
       .roles();
-    let admins: string[] = [];
+    const admins: string[] = [];
     await Promise.all(
       roles_draft.map(async (role) => {
         if (role.isAdmin) {

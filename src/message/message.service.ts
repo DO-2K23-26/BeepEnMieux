@@ -41,7 +41,9 @@ export class MessageService {
   }
 
   async findAllByGroup(nom: string) {
-    const channel = await this.prisma.channel.findUnique({ where: { nom: nom } });
+    const channel = await this.prisma.channel.findUnique({
+      where: { nom: nom },
+    });
     return this.prisma.message
       .findMany({
         where: { channelId: channel.id },
