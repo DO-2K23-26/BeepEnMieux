@@ -27,12 +27,9 @@ export class AuthController {
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  async login(
-    @Body() body: { username: string; password: string },
-    @Res() res,
-  ) {
+  async login(@Body() body: { email: string; password: string }, @Res() res) {
     const accessToken = (
-      await this.authService.login(body.username, body.password)
+      await this.authService.login(body.email, body.password)
     ).access_token;
     const refreshToken = (await this.authService.refreshToken(body))
       .refresh_token;
