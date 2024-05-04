@@ -6,6 +6,7 @@ import {
 import * as dotenv from 'dotenv';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
+import { env } from 'process';
 
 async function bootstrap() {
   dotenv.config();
@@ -16,7 +17,10 @@ async function bootstrap() {
     { bufferLogs: true },
   );
   app.useLogger(app.get(Logger));
-  app.enableCors();
+  app.enableCors({
+    origin: env.FRONTEND_URL,
+    credentials: true,
+  });
   await app.listen(port, '0.0.0.0');
 }
 bootstrap();

@@ -1,4 +1,14 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Req, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ServerService } from './server.service';
 import { UsersService } from 'src/users/users.service';
 import { Server, User } from '@prisma/client';
@@ -12,7 +22,7 @@ export class ServerController {
 
   @Get()
   async findServersByUserId(@Req() request: Request) {
-    const userProfile : User = request['user'];
+    const userProfile: User = request['user'];
     return this.serverService.findServersByUserId(userProfile.id);
   }
 
@@ -21,7 +31,7 @@ export class ServerController {
     const userProfile: User = request['user'];
 
     if (!(await this.serverService.isInServer(userProfile, name))) {
-      throw new UnauthorizedException;
+      throw new UnauthorizedException();
     }
 
     const users = this.serverService.findServerUsersFormat(name);
@@ -29,7 +39,10 @@ export class ServerController {
   }
 
   @Post(':name')
-  async createAndJoin(@Param('name') name: string, @Req() request: Request) : Promise<Server | null>{
+  async createAndJoin(
+    @Param('name') name: string,
+    @Req() request: Request,
+  ): Promise<Server | null> {
     const userProfile = request['user'];
 
     const server: Server = await this.serverService.addOrCreateServer(
@@ -49,7 +62,7 @@ export class ServerController {
 
     // check if the user is the owner
     if (!(await this.serverService.isOwner(userProfile, name))) {
-      throw new UnauthorizedException;
+      throw new UnauthorizedException();
     }
 
     return this.serverService.update(name, server);
@@ -61,7 +74,6 @@ export class ServerController {
 
     return this.serverService.remove(id);
   }
-
 
   @Get(':name/owner')
   async isOwner(@Req() request: Request, @Param('name') serverName: string) {
@@ -82,7 +94,7 @@ export class ServerController {
       !(await this.serverService.isOwner(userProfile, serverName)) &&
       user.id !== userProfile.id
     ) {
-      throw new UnauthorizedException;
+      throw new UnauthorizedException();
     }
 
     return this.serverService.isBanned(user, serverName);

@@ -67,14 +67,11 @@ export class UsersService {
     firstname: string,
   ): Promise<Omit<User, 'password'> | null> {
     // Check if user already exists
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email },
+    const existingUser = await this.prisma.user.findFirst({
+      where: { OR: [{ email }, { username }] },
     });
     if (existingUser) {
-      throw new HttpException(
-        'User with email: ' + email + ' already exists',
-        HttpStatus.NOT_FOUND,
-      );
+      throw new HttpException('User already exists', HttpStatus.NOT_FOUND);
     }
     console.log('email', email);
     console.log('username', username);
@@ -95,7 +92,7 @@ export class UsersService {
       username,
       password: hashedPassword,
       firstname: firstname,
-      lastname: lastname
+      lastname: lastname,
     };
 
     const result = await this.prisma.user.create({

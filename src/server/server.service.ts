@@ -202,10 +202,21 @@ export class ServerService {
       .findFirst({ where: { nom: name } })
       .users()
       .then((users) => {
+        if (!users) return false;
         return users.some((element) => element.id === userProfile.id);
       });
   }
-  async findServersByUserId(id: any): Promise<Server[]> {
-    return this.prisma.server.findMany({ where: { users: { some: { id } } } });
+  async findServersByUserId(
+    id: any,
+  ): Promise<{ id: number; name: string; owner_id: number }[]> {
+    return (
+      await this.prisma.server.findMany({ where: { users: { some: { id } } } })
+    ).map((server) => {
+      return {
+        id: server.id,
+        name: server.nom,
+        owner_id: server.ownerId,
+      };
+    });
   }
 }
