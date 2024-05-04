@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: beepenmieux
-          image: {{ .Values.beepenmieux.image.repository}} : {{ .Values.beepenmieux.image.tag }}
+          image: {{ .Values.beepenmieux.image.repository }}:{{ .Values.beepenmieux.image.tag }}
           imagePullPolicy: {{ .Values.beepenmieux.image.pullPolicy }}
           env:
             - name: DB_URL
