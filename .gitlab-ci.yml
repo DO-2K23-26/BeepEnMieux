@@ -24,6 +24,7 @@ Build helm chart:
   stage: build
   only:
     - tags
+    - main
   script:
     - helm lint helm/beepenmieux
     - helm package helm/beepenmieux --app-version $CI_COMMIT_TAG
@@ -58,6 +59,7 @@ Store docker image:
     - shell
   only:
     - tags
+    - main
   stage: store
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -71,12 +73,29 @@ Store docker image:
     - Static Code Analysis
     - Dependency Security Scan
 
-Store helm chart:
+Store staging helm chart:
   tags:
     - shell
   stage: store
   only:
     - tags
+    - main
+  script:
+    - 'curl --request POST --user gitlab-ci-token:$CI_JOB_TOKEN --form "chart=@beepenmieux-0.1.0.tgz" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/api/staging/charts"'
+  needs:
+    - Buid image
+    - Build helm chart
+    - Static Code Analysis
+    - Dependency Security Scan
+
+Store stable helm chart:
+  tags:
+    - shell
+  stage: store
+  when: manual
+  only:
+    - tags
+    - main
   script:
     - 'curl --request POST --user gitlab-ci-token:$CI_JOB_TOKEN --form "chart=@beepenmieux-0.1.0.tgz" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/api/stable/charts"'
   needs:
@@ -98,10 +117,11 @@ pages:
       - public
   only:
     - main
+    - tags
   needs:
     - Buid image
     - Build helm chart
     - Static Code Analysis
     - Dependency Security Scan
     - Store docker image
-    - Store helm chart
+    - Store staging helm chart

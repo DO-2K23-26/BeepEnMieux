@@ -11,3 +11,5 @@ beepenmieux:
     pullPolicy: Always
     registry: 
       credentials: pluff-registry-credentials
+  db:
+    realeseName: beep-db-postgresql
