@@ -26,13 +26,13 @@ spec:
           imagePullPolicy: {{ .Values.beepenmieux.image.pullPolicy }}
           env:
             - name: DB_URL
-              value: {{ .Values.beepenmieux.db.realeseName }}:5432
+              value: {{ .Values.beepenmieux.db.realeseName }}-postgresql:5432
             - name: DB_USER
               value: postgres
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.beepenmieux.db.realeseName }}
+                  name: {{ .Values.beepenmieux.db.realeseName }}-postgresql
                   key: postgres-password
             - name: DB_NAME
               value: beep-db
