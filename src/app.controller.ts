@@ -5,7 +5,7 @@ import { Public } from './app.service';
 export class AppController {
   @Public()
   @Get()
-  getHello(): { message: string } {
-    return { message: 'up' };
+  getHello(): { message: string; version: string } {
+    return { message: 'up', version: '1.0.0' };
   }
 }
