@@ -46,4 +46,4 @@ spec:
             - containerPort: 9644
               protocol: TCP
       imagePullSecrets:
-        - name: {{ .Values.beepenmieux.image.registry-credentials }}
+        - name: {{ .Values.beepenmieux.image.registry.credentials }}
