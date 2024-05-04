@@ -26,7 +26,6 @@ export class MessageController {
     private readonly userService: UsersService,
     private readonly channelService: ChannelService,
     private readonly serverService: ServerService,
-
   ) {}
 
   @Post()
@@ -34,6 +33,7 @@ export class MessageController {
     return this.messageService.create(createMessageDto);
   }
 
+  /* TODO AFTER FIXING MESSAGE FINDONE
   @Get(':id')
   async findOne(@Param('id') id: number, @Req() request: Request) {
     // check if user is in server
@@ -51,7 +51,7 @@ export class MessageController {
     }
 
     return message;
-  }
+  }*/
 
   @Get('channel/:id')
   async findAllByGroup(@Param('id') id: string, @Req() request: Request) {

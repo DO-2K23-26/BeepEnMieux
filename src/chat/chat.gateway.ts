@@ -1,24 +1,16 @@
-import {
-  MessageBody,
-  SubscribeMessage,
-  WebSocketGateway,
-  WebSocketServer,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  WsException,
-  ConnectedSocket,
-} from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import {
-  ServerToClientEvents,
-  ClientToServerEvents,
-} from '../shared/interfaces/chat.interface';
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  WebSocketGateway,
+  WebSocketServer,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { UsersService } from '../users/users.service';
-import { Message } from '@prisma/client';
-import { ChannelService } from 'src/channel/channel.service';
-import { AuthService } from 'src/auth/auth.service';
-import { MessageService } from 'src/message/message.service';
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+} from '../shared/interfaces/chat.interface';
+import { ChatService } from './chat.service';
 
 @WebSocketGateway({
   cors: {
@@ -26,12 +18,7 @@ import { MessageService } from 'src/message/message.service';
   },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(
-    private userService: UsersService,
-    private channelService: ChannelService,
-    private authService: AuthService,
-    private messageService: MessageService,
-  ) {}
+  constructor(private readonly chatService: ChatService) {}
 
   @WebSocketServer() server: Server = new Server<
     ServerToClientEvents,
@@ -40,6 +27,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private logger = new Logger('ChatGateway');
 
+  /*
+  TODO : Implement the following methods
   @SubscribeMessage('chat')
   async handleChatEvent(
     @MessageBody() data: Promise<{ contenu: string; timestamp: number }>,
@@ -59,13 +48,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('join_room')
   async handleSetClientDataEvent(client: Socket, data: string) {
     throw new Error('Method not implemented.');
-  }
+  }*/
 
   async handleConnection(socket: Socket): Promise<void> {
-    throw new Error('Method not implemented.');
+    this.chatService.handleConnection(socket);
   }
 
-  async handleDisconnect(socket: Socket): Promise<void> {
-    throw new Error('Method not implemented.');
+  async handleDisconnect(/*socket: Socket*/): Promise<void> {
+    //TODO : Implement the handleDisconnect method
+    //this.chatService.handleDisconnect(socket);
   }
 }

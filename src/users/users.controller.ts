@@ -13,7 +13,6 @@ import { User } from '@prisma/client';
 import { Public } from 'src/app.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
-import { first } from 'rxjs';
 @Controller('user')
 export class UsersController {
   constructor(

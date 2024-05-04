@@ -1,15 +1,14 @@
 import { Module } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
+import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
+import { ChannelModule } from './channel/channel.module';
 import { ChatModule } from './chat/chat.module';
 import { MessageModule } from './message/message.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PrismaService } from './prisma/prisma.service';
-import { UsersModule } from './users/users.module';
-import { AppController } from './app.controller';
-import { ServerController } from './server/server.controller';
 import { ServerModule } from './server/server.module';
-import { ChannelModule } from './channel/channel.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
