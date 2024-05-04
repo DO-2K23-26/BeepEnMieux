@@ -8,7 +8,6 @@ beepenmieux:
   replicas: 2
   image:
     repository: gitlab.polytech.umontpellier.fr:5050/pluff/beepenmieux
-    tag: dev
     pullPolicy: Always
     registry: 
       credentials: pluff-registry-credentials
