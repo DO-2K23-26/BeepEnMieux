@@ -24,7 +24,6 @@ Build helm chart:
   stage: build
   only:
     - tags
-    - main
   script:
     - helm lint helm/beepenmieux
     - helm package helm/beepenmieux --app-version $CI_COMMIT_TAG
@@ -59,7 +58,6 @@ Store docker image:
     - shell
   only:
     - tags
-    - main
   stage: store
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -79,7 +77,6 @@ Store staging helm chart:
   stage: store
   only:
     - tags
-    - main
   script:
     - 'curl --request POST --user gitlab-ci-token:$CI_JOB_TOKEN --form "chart=@beepenmieux-0.1.0.tgz" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/api/staging/charts"'
   needs:
@@ -95,7 +92,6 @@ Store stable helm chart:
   when: manual
   only:
     - tags
-    - main
   script:
     - 'curl --request POST --user gitlab-ci-token:$CI_JOB_TOKEN --form "chart=@beepenmieux-0.1.0.tgz" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/api/stable/charts"'
   needs:
@@ -116,7 +112,6 @@ pages:
     paths:
       - public
   only:
-    - main
     - tags
   needs:
     - Buid image
