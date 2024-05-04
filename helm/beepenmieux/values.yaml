@@ -1,0 +1,18 @@
+# Default values for beepenmieux.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+beepenmieux:
+  network:
+    url: api.beep.gay
+  replicas: 2
+  image:
+    repository: gitlab.polytech.umontpellier.fr:5050/pluff/beepenmieux
+    pullPolicy: Always
+    registry: 
+      credentials: pluff-registry-credentials
+  db:
+    realeseName: beep-db
+
+frontend:
+  url: https://beep.gay

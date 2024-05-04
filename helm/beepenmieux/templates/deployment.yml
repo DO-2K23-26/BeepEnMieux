@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beepenmieux
+  labels:
+    project: beep
+    app: beepenmieux
+    role: backend
+spec:
+  replicas: {{ .Values.beepenmieux.replicas }}
+  selector:
+    matchLabels:
+      project: beep
+      app: beepenmieux
+      role: backend
+  template:
+    metadata:
+      labels:
+        project: beep
+        app: beepenmieux
+        role: backend
+    spec:
+      containers:
+        - name: beepenmieux
+          image: {{ .Values.beepenmieux.image.repository }}:{{ .Chart.AppVersion }}
+          imagePullPolicy: {{ .Values.beepenmieux.image.pullPolicy }}
+          env:
+            - name: DB_URL
+              value: {{ .Values.beepenmieux.db.realeseName }}-postgresql:5432
+            - name: DB_USER
+              value: postgres
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.beepenmieux.db.realeseName }}-postgresql
+                  key: postgres-password
+            - name: DB_NAME
+              value: beep-db
+            - name: PORT
+              value: '9644'
+            - name: VERSION
+              value: {{ .Chart.AppVersion }}
+            - name: FRONTEND_URL
+              value: {{ .Values.frontend.url }}
+          resources:
+            limits:
+              memory: '2Gi'
+              cpu: '500m'
+          ports:
+            - containerPort: 9644
+              protocol: TCP
+      imagePullSecrets:
+        - name: {{ .Values.beepenmieux.image.registry.credentials }}

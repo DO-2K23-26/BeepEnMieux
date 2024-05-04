@@ -3,7 +3,6 @@ stages:
   - test
   - store
   - documentation
-  - deploy
 
 variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
@@ -18,6 +17,19 @@ Buid image:
     key: ${CI_PIPELINE_ID}
     paths:
       - node_modules/
+
+Build helm chart:
+  tags:
+    - shell
+  stage: build
+  only:
+    - tags
+  script:
+    - helm lint helm/beepenmieux
+    - helm package helm/beepenmieux --app-version $CI_COMMIT_TAG
+  artifacts:
+    paths:
+      - '*.tgz'
 
 Static Code Analysis:
   tags:
@@ -41,21 +53,52 @@ Dependency Security Scan:
   needs:
     - Buid image
 
-Store image:
+Store docker image:
   tags:
     - shell
+  only:
+    - tags
   stage: store
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:latest
-    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker tag $IMAGE_TAG ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}
     - docker push ${CI_REGISTRY_IMAGE}:latest
-    - docker push ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
-  only:
-    - main
+    - docker push ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}
   needs:
-    - Dependency Security Scan
+    - Buid image
+    - Build helm chart
     - Static Code Analysis
+    - Dependency Security Scan
+
+Store staging helm chart:
+  tags:
+    - shell
+  stage: store
+  only:
+    - tags
+  script:
+    - 'curl --request POST --user gitlab-ci-token:$CI_JOB_TOKEN --form "chart=@beepenmieux-0.1.0.tgz" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/api/staging/charts"'
+  needs:
+    - Buid image
+    - Build helm chart
+    - Static Code Analysis
+    - Dependency Security Scan
+
+Store stable helm chart:
+  tags:
+    - shell
+  stage: store
+  when: manual
+  only:
+    - tags
+  script:
+    - 'curl --request POST --user gitlab-ci-token:$CI_JOB_TOKEN --form "chart=@beepenmieux-0.1.0.tgz" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/api/stable/charts"'
+  needs:
+    - Buid image
+    - Build helm chart
+    - Static Code Analysis
+    - Dependency Security Scan
 
 pages:
   tags:
@@ -69,24 +112,11 @@ pages:
     paths:
       - public
   only:
-    - main
+    - tags
   needs:
-  - Dependency Security Scan
-  - Static Code Analysis
-
-Deploy to Production:
-  tags:
-    - docker
-  image: ilyasemenov/gitlab-ci-git-push
-  stage: deploy
-  when: manual
-  environment:
-    name: production
-    url: http://localhost:9644
-  only:
-    - main
-  script:
-    - git-push ssh://dokku@162.38.112.145:22/beepenmieux
-  needs:
-    - Dependency Security Scan
+    - Buid image
+    - Build helm chart
     - Static Code Analysis
+    - Dependency Security Scan
+    - Store docker image
+    - Store staging helm chart
