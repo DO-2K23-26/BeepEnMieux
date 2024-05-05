@@ -1,5 +1,7 @@
 import {
   ConflictException,
+  HttpException,
+  HttpStatus,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -37,10 +39,16 @@ export class ChannelService {
     return this.prisma.channel.findUnique({ where: { id } }).messages();
   }
 
-  // TODO: Implement this method
-  // findChannelsByServerId(id: any): Promise<Channel[]> {
-  //   throw new Error('Method not implemented.');
-  // }
+  async findChannelsByServerId(id: number): Promise<Channel[]> {
+    if (!(await this.findById(id))) {
+      throw new HttpException('Server not found', HttpStatus.NOT_FOUND);
+    }
+    return this.prisma.channel.findMany({
+      where: {
+        serverId: id,
+      },
+    });
+  }
 
   async findOne(id: number): Promise<Channel> {
     return this.prisma.channel.findUnique({
