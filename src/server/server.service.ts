@@ -295,4 +295,8 @@ export class ServerService {
 
     return false;
   }
+
+  async findById(id: string) {
+    return this.prisma.server.findUnique({ where: { id: parseInt(id) } });
+  }
 }

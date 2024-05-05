@@ -66,6 +66,7 @@ export class ChannelService {
     return this.prisma.channel.findUnique({ where: { id } }).server();
   }
 
+  //TODO: enable only for admin and server owner
   async createChannel(
     newChannel: CreateChannelDto,
     user: User,

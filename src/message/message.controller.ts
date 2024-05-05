@@ -17,6 +17,7 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { MessageService } from './message.service';
 import { User } from '@prisma/client';
+import { MessageEntity } from './dto/reponse.dto';
 
 @Controller('message')
 export class MessageController {
@@ -51,21 +52,6 @@ export class MessageController {
     }
 
     return message;
-  }*/
-
-  /*
-  TODO FIX THIS METHOD
-  @Get('channel/:id')
-  async findAllByGroup(@Param('id') id: number, @Req() request: Request) {
-    const userProfile = request['user'];
-    const server = await this.serverService.findByName(id);
-    if ((await this.userService.isInServer(userProfile, server)) === false) {
-      throw new HttpException('Unauthorized', 401);
-    }
-    if (await this.channelService.isTimeOut(userProfile, id)) {
-      throw new HttpException('User is timed out', 401);
-    }
-    return this.messageService.findAllByGroup(id);
   }*/
 
   @Patch(':id')
@@ -111,5 +97,18 @@ export class MessageController {
     }
 
     return this.messageService.remove(id);
+  }
+
+  @Get(':serverId/:channelId')
+  async findAllByChannel(
+    @Param('serverId') serverId: string,
+    @Param('channelId') channelId: number,
+    @Req() request: Request,
+  ): Promise<MessageEntity[]> {
+    return this.messageService.findMessagesByChannelId(
+      channelId,
+      serverId,
+      request['user'],
+    );
   }
 }
