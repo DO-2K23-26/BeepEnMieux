@@ -1,3 +1,3 @@
 export interface UpdateChannelDto {
-    name: string;
+  name: string;
 }
