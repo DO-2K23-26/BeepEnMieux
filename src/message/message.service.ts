@@ -40,6 +40,8 @@ export class MessageService {
     return this.prisma.message.delete({ where: { id } });
   }
 
+  /*
+  TODO FIX THIS METHOD
   async findAllByGroup(nom: string) {
     const channel = await this.prisma.channel.findUnique({
       where: { nom: nom },
@@ -71,5 +73,5 @@ export class MessageService {
           }),
         ),
       );
-  }
+  }*/
 }

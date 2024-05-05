@@ -4,8 +4,9 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class ChannelService {
-  async isTimeOut(author: User, channelName: string) {
-    const channel = await this.findByName(channelName);
+  constructor(private readonly prisma: PrismaService) {}
+  async isTimeOut(author: User, channelId: number) {
+    const channel = await this.findById(channelId);
     return this.prisma.timedOut.findFirst({
       where: {
         userId: author.id,
@@ -13,10 +14,11 @@ export class ChannelService {
       },
     });
   }
-  findByName(channelName: string): Promise<Channel> {
-    return this.prisma.channel.findUnique({ where: { nom: channelName } });
+  findById(channelId: number): Promise<Channel> {
+    return this.prisma.channel.findUnique({
+      where: { id: parseInt(String(channelId)) },
+    });
   }
-  constructor(private readonly prisma: PrismaService) {}
   /*
   TODO: Implement the following methods
   findMessagesByChannelId(id: any):

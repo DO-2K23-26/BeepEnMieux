@@ -53,8 +53,10 @@ export class MessageController {
     return message;
   }*/
 
+  /*
+  TODO FIX THIS METHOD
   @Get('channel/:id')
-  async findAllByGroup(@Param('id') id: string, @Req() request: Request) {
+  async findAllByGroup(@Param('id') id: number, @Req() request: Request) {
     const userProfile = request['user'];
     const server = await this.serverService.findByName(id);
     if ((await this.userService.isInServer(userProfile, server)) === false) {
@@ -64,7 +66,7 @@ export class MessageController {
       throw new HttpException('User is timed out', 401);
     }
     return this.messageService.findAllByGroup(id);
-  }
+  }*/
 
   @Patch(':id')
   async update(
