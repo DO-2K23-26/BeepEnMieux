@@ -1,4 +1,5 @@
 import {
+  HttpException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -32,22 +33,56 @@ export class MessageService {
     });
   }
 
-  async findOne(id: number): Promise<Message | null> {
-    return this.prisma.message.findUnique({ where: { id } });
+  async findOne(id: number, user: User): Promise<Message | null> {
+    // Check if message exists
+    const message = await this.prisma.message.findUnique({ where: { id } });
+    if (!message) {
+      throw new NotFoundException('Message not found');
+    }
+    const channel = await this.channelService.findOne(message.channelId);
+    const server = await this.channelService.findServerByChannelId(channel.id);
+
+    if ((await this.serverService.isInServer(user, server.nom)) === false) {
+      throw new HttpException('Unauthorized', 401);
+    }
+
+    if (!message) {
+      throw new HttpException('Message not found', 404);
+    }
+    return message;
   }
 
   async update(
     id: number,
-    message: Prisma.MessageUpdateInput,
+    updateMessageDto: Prisma.MessageUpdateInput,
+    user: User,
   ): Promise<Message> {
-    return this.prisma.message.update({ where: { id }, data: message });
+    const message = await this.findOne(id, user);
+
+    if (!message) {
+      throw new HttpException('Message not found', 404);
+    }
+
+    if (user.id !== message.authorId) {
+      throw new HttpException('Unauthorized', 401);
+    }
+    return this.prisma.message.update({ where: { id }, data: updateMessageDto });
   }
 
   async updateContenu(id: number, contenu: string): Promise<Message> {
     return this.prisma.message.update({ where: { id }, data: { contenu } });
   }
 
-  async remove(id: number): Promise<Message | null> {
+  async remove(id: number, user: User): Promise<Message | null> {
+    const message = await this.findOne(id, user);
+
+    if (!message) {
+      throw new HttpException('Message not found', 404);
+    }
+
+    if (user.id !== message.authorId) {
+      throw new HttpException('Unauthorized', 401);
+    }
     return this.prisma.message.delete({ where: { id } });
   }
 
