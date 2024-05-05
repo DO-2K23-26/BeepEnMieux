@@ -206,6 +206,7 @@ export class ServerService {
         return users.some((element) => element.id === userProfile.id);
       });
   }
+
   async findServersByUserId(
     id: any,
   ): Promise<{ id: number; name: string; owner_id: number }[]> {
