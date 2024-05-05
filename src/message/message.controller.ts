@@ -3,29 +3,25 @@ import {
   Controller,
   Delete,
   Get,
-  HttpException,
   Param,
   Patch,
   Post,
   Req,
 } from '@nestjs/common';
-import { AuthService } from 'src/auth/auth.service';
+import { User } from '@prisma/client';
 import { ChannelService } from 'src/channel/channel.service';
 import { UsersService } from 'src/users/users.service';
-import { ServerService } from 'src/server/server.service';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { MessageEntity } from './dto/reponse.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { MessageService } from './message.service';
-import { User } from '@prisma/client';
 
 @Controller('message')
 export class MessageController {
   constructor(
     private readonly messageService: MessageService,
-    private readonly authService: AuthService,
     private readonly userService: UsersService,
     private readonly channelService: ChannelService,
-    private readonly serverService: ServerService,
   ) {}
 
   @Post()
@@ -33,37 +29,11 @@ export class MessageController {
     return this.messageService.create(createMessageDto);
   }
 
-  /* TODO AFTER FIXING MESSAGE FINDONE
   @Get(':id')
   async findOne(@Param('id') id: number, @Req() request: Request) {
     // check if user is in server
-    const user = request['user'];
-    const message = await this.messageService.findOne(id);
-    const channel = await this.channelService.findOne(message.channelId);
-    const server = await this.channelService.findServerByChannelId(channel.id);
-
-    if ((await this.userService.isInServer(user, server)) === false) {
-      throw new HttpException('Unauthorized', 401);
-    }
-
-    if (!message) {
-      throw new HttpException('Message not found', 404);
-    }
-
-    return message;
-  }*/
-
-  @Get('channel/:id')
-  async findAllByGroup(@Param('id') id: string, @Req() request: Request) {
-    const userProfile = request['user'];
-    const server = await this.serverService.findByName(id);
-    if ((await this.userService.isInServer(userProfile, server)) === false) {
-      throw new HttpException('Unauthorized', 401);
-    }
-    if (await this.channelService.isTimeOut(userProfile, id)) {
-      throw new HttpException('User is timed out', 401);
-    }
-    return this.messageService.findAllByGroup(id);
+    const user: User = request['user'];
+    return await this.messageService.findOne(id, user);
   }
 
   @Patch(':id')
@@ -73,16 +43,6 @@ export class MessageController {
     @Req() request: Request,
   ) {
     const user: User = request['user'];
-    const message = await this.messageService.findOne(id);
-
-    if (!message) {
-      throw new HttpException('Message not found', 404);
-    }
-
-    if (user.id !== message.authorId) {
-      throw new HttpException('Unauthorized', 401);
-    }
-
     const messageUpdateInput = {
       ...updateMessageDto,
       author: {
@@ -92,22 +52,26 @@ export class MessageController {
         connect: { id: updateMessageDto.channel.id },
       },
     };
-    return this.messageService.update(id, messageUpdateInput);
+    return this.messageService.update(id, messageUpdateInput, user);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: number, @Req() request: Request) {
     const user: User = request['user'];
-    const message = await this.messageService.findOne(id);
+    return this.messageService.remove(id, user);
+  }
 
-    if (!message) {
-      throw new HttpException('Message not found', 404);
-    }
-
-    if (user.id !== message.authorId) {
-      throw new HttpException('Unauthorized', 401);
-    }
-
-    return this.messageService.remove(id);
+  @Get(':serverId/:channelId')
+  async findAllByChannel(
+    @Param('serverId') serverId: string,
+    @Param('channelId') channelId: number,
+    @Req() request: Request,
+  ): Promise<MessageEntity[]> {
+    const user: User = request['user'];
+    return this.messageService.findMessagesByChannelId(
+      channelId,
+      serverId,
+      user,
+    );
   }
 }

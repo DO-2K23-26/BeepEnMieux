@@ -7,11 +7,11 @@ import {
   Patch,
   Post,
   Req,
-  UnauthorizedException,
 } from '@nestjs/common';
-import { ServerService } from './server.service';
-import { UsersService } from 'src/users/users.service';
 import { Server, User } from '@prisma/client';
+import { UsersService } from 'src/users/users.service';
+import { ServerService } from './server.service';
+import { UpdateServerDto } from './dto/updateServer.dto';
 
 @Controller('server')
 export class ServerController {
@@ -29,13 +29,7 @@ export class ServerController {
   @Get(':name')
   async findOne(@Param('name') name: string, @Req() request: Request) {
     const userProfile: User = request['user'];
-
-    if (!(await this.serverService.isInServer(userProfile, name))) {
-      throw new UnauthorizedException();
-    }
-
-    const users = this.serverService.findServerUsersFormat(name);
-    return users;
+    return await this.serverService.findServerUsersFormat(name, userProfile);
   }
 
   @Post(':name')
@@ -43,41 +37,29 @@ export class ServerController {
     @Param('name') name: string,
     @Req() request: Request,
   ): Promise<Server | null> {
-    const userProfile = request['user'];
-
-    const server: Server = await this.serverService.addOrCreateServer(
-      name,
-      userProfile,
-    );
-    return server;
+    const userProfile: User = request['user'];
+    return await this.serverService.addOrCreateServer(name, userProfile);
   }
 
   @Patch(':name')
   async update(
     @Param('name') name: string,
-    @Body('server') server: Server,
+    @Body() newServer: UpdateServerDto,
     @Req() request: Request,
-  ) {
-    const userProfile = request['user'];
-
-    // check if the user is the owner
-    if (!(await this.serverService.isOwner(userProfile, name))) {
-      throw new UnauthorizedException();
-    }
-
-    return this.serverService.update(name, server);
+  ): Promise<Server> {
+    const userProfile: User = request['user'];
+    return this.serverService.update(name, newServer, userProfile);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: number) {
-    //TODO IMPORTANT IL FAUT PROTEGER CETTE ROUTE
-
-    return this.serverService.remove(id);
+  remove(@Req() request: Request, @Param('id') id: number) {
+    const userProfile: User = request['user'];
+    return this.serverService.remove(id, userProfile);
   }
 
   @Get(':name/owner')
   async isOwner(@Req() request: Request, @Param('name') serverName: string) {
-    const userProfile = request['user'];
+    const userProfile: User = request['user'];
     return this.serverService.isOwner(userProfile, serverName);
   }
 
@@ -85,18 +67,15 @@ export class ServerController {
   async getBanned(
     @Req() request: Request,
     @Param('name') serverName: string,
-    @Param('user') nickname: string,
+    @Param('user') username: string,
   ) {
-    const userProfile = request['user'];
-    const user = await this.userService.findOneByUsername(nickname);
-    if (
-      //TODO IL FAUT RAJOUTER CHECK DE PERMISSION PAR ROLE
-      !(await this.serverService.isOwner(userProfile, serverName)) &&
-      user.id !== userProfile.id
-    ) {
-      throw new UnauthorizedException();
-    }
+    const userProfile: User = request['user'];
+    return this.serverService.isBanned(userProfile, serverName, username);
+  }
 
-    return this.serverService.isBanned(user, serverName);
+  @Get(':id/channels')
+  async getAllChannels(@Param('id') id: string, @Req() request: Request) {
+    const userProfile: User = request['user'];
+    return this.serverService.getAllChannels(id, userProfile);
   }
 }

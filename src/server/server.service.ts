@@ -1,7 +1,14 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Server, User, Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UsersService } from 'src/users/users.service';
+import { UpdateServerDto } from './dto/updateServer.dto';
 
 @Injectable()
 export class ServerService {
@@ -39,7 +46,7 @@ export class ServerService {
     }
   }
 
-  async findUsersByServerId(id: any): Promise<User[]> {
+  async findUsersByServerId(id: number): Promise<User[]> {
     return this.prisma.server.findFirst({ where: { id } }).users();
   }
 
@@ -47,8 +54,13 @@ export class ServerService {
     return await this.prisma.server.findFirst({ where: { nom: name } });
   }
 
-  async findServerUsersFormat(name: string) {
+  async findServerUsersFormat(name: string, userProfile: User) {
     const server = await this.findByName(name);
+
+    if (!(await this.isInServer(userProfile, name))) {
+      throw new UnauthorizedException();
+    }
+
     const users_draft = await this.prisma.server
       .findUnique({ where: { nom: name } })
       .users();
@@ -107,7 +119,16 @@ export class ServerService {
     return { owner, admins, users, banned: usersBanned };
   }
 
-  async isBanned(user: User, serverName: string) {
+  async isBanned(user: User, serverName: string, username: string) {
+    const userProfile = await this.userService.findOneByUsername(username);
+    if (
+      (!(await this.isOwner(userProfile, serverName)) ||
+        !(await this.isSuperUser(userProfile, serverName))) &&
+      user.id !== userProfile.id
+    ) {
+      throw new UnauthorizedException();
+    }
+
     const server = await this.findByName(serverName);
     if (!server) {
       throw new HttpException('Group not found', HttpStatus.NOT_FOUND);
@@ -169,6 +190,7 @@ export class ServerService {
     });
     return true;
   }
+
   async isRole(username: string, role: Role): Promise<boolean> {
     const user = await this.userService.findOneByUsername(username);
     const roles = await this.prisma.user
@@ -181,22 +203,51 @@ export class ServerService {
     }
     return false;
   }
-  async remove(id: number) {
-    this.prisma.server.delete({ where: { id } });
+
+  async remove(id: number, userProfile: User): Promise<Server> {
+    const serv = await this.prisma.server.findUnique({
+      where: { id: parseInt(String(id)) },
+    });
+    if (!serv) {
+      throw new NotFoundException('Server not found');
+    }
+    if (!(await this.isOwner(userProfile, serv.nom))) {
+      throw new UnauthorizedException('User not owner');
+    }
+    return this.prisma.server.delete({ where: { id: parseInt(String(id)) } });
   }
-  async update(
-    name: string,
-    server: { id: number; nom: string; ownerId: number },
-  ) {
-    this.prisma.server.update({ where: { nom: name }, data: server });
+
+  async update(name: string, newServer: UpdateServerDto, userProfile: User) {
+    // check if the server exists
+    if (this.findByName(name) == null) {
+      throw new NotFoundException('Server not found');
+    }
+
+    // check if the user is the owner
+    if (!(await this.isOwner(userProfile, name))) {
+      throw new UnauthorizedException();
+    }
+
+    return await this.prisma.server.update({
+      where: { nom: name },
+      data: newServer,
+    });
   }
   async isOwner(userProfile: User, name: string): Promise<boolean> {
-    return this.prisma.server
-      .findFirst({ where: { nom: name } })
-      .then((server) => {
-        return server.ownerId === userProfile.id;
-      });
+    // check if the server exists
+    const server = await this.findByName(name);
+
+    if (!server) {
+      throw new NotFoundException('Server not found');
+    }
+
+    if (server.ownerId === userProfile.id) {
+      return true;
+    } else {
+      return false;
+    }
   }
+
   async isInServer(userProfile: User, name: string): Promise<boolean> {
     return this.prisma.server
       .findFirst({ where: { nom: name } })
@@ -206,17 +257,92 @@ export class ServerService {
         return users.some((element) => element.id === userProfile.id);
       });
   }
+  // TODO: Remove one of isInServerId and isInServer
+  async isInServerId(userProfile: User, id: string): Promise<boolean> {
+    return this.prisma.server
+      .findFirst({ where: { id: parseInt(id) } })
+      .users()
+      .then((users) => {
+        if (!users) return false;
+        return users.some((element) => element.id === userProfile.id);
+      });
+  }
+
   async findServersByUserId(
     id: any,
-  ): Promise<{ id: number; name: string; owner_id: number }[]> {
-    return (
-      await this.prisma.server.findMany({ where: { users: { some: { id } } } })
-    ).map((server) => {
-      return {
-        id: server.id,
-        name: server.nom,
-        owner_id: server.ownerId,
-      };
-    });
+  ): Promise<{ id: number; name: string; owner_id: string }[]> {
+    return Promise.all(
+      (
+        await this.prisma.server.findMany({
+          where: { users: { some: { id } } },
+        })
+      ).map(async (server) => {
+        return {
+          id: server.id,
+          name: server.nom,
+          owner_id: await this.userService
+            .findOneById(server.ownerId)
+            .then((user) => {
+              return user.user.username;
+            }),
+        };
+      }),
+    );
+  }
+
+  async getAllChannels(serverId: string, user: User) {
+    // check if the user is in the group
+    if (!(await this.isInServerId(user, serverId))) {
+      throw new HttpException('User not in group', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.prisma.server
+      .findUnique({ where: { id: Number(serverId) } })
+      .channels()
+      .then((channels) => {
+        return channels.map((channel) => {
+          return {
+            id: channel.id,
+            name: channel.nom,
+            server_id: channel.serverId,
+            type: 'TEXT',
+          };
+        });
+      });
+  }
+
+  async isSuperUser(user: User, serverName: string) {
+    const server = await this.findByName(serverName);
+    if (!server) {
+      throw new HttpException('Server not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (!(await this.isInServer(user, serverName))) {
+      throw new HttpException('User not in server', HttpStatus.UNAUTHORIZED);
+    }
+
+    const userRoles = await this.prisma.user
+      .findUnique({
+        where: { id: user.id },
+      })
+      .roles();
+
+    for (const role of userRoles) {
+      if (
+        (
+          await this.prisma.role.findUnique({
+            where: { id: role.id },
+          })
+        ).isAdmin
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  async findById(id: string) {
+    return this.prisma.server.findUnique({ where: { id: parseInt(id) } });
   }
 }
