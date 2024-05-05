@@ -9,8 +9,14 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findOneByUsername(username: string): Promise<User | null> {
-    return this.prisma.user.findFirst({ where: { username: username } });
+    // Check if user already exists
+    if ((await this.prisma.user.findFirst({ where: { username } }))) {
+      return await this.prisma.user.findFirst({ where: { username } });
+    } else {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
   }
+  
   async findByEmail(author: string) {
     return await this.prisma.user.findFirst({ where: { email: author } });
   }

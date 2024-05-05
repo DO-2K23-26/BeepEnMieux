@@ -29,13 +29,7 @@ export class ServerController {
   @Get(':name')
   async findOne(@Param('name') name: string, @Req() request: Request) {
     const userProfile: User = request['user'];
-
-    if (!(await this.serverService.isInServer(userProfile, name))) {
-      throw new UnauthorizedException();
-    }
-
-    const users = this.serverService.findServerUsersFormat(name);
-    return users;
+    return await this.serverService.findServerUsersFormat(name, userProfile);
   }
 
   @Post(':name')
@@ -44,12 +38,10 @@ export class ServerController {
     @Req() request: Request,
   ): Promise<Server | null> {
     const userProfile = request['user'];
-
-    const server: Server = await this.serverService.addOrCreateServer(
+    return await this.serverService.addOrCreateServer(
       name,
       userProfile,
     );
-    return server;
   }
 
   @Patch(':name')
@@ -59,13 +51,7 @@ export class ServerController {
     @Req() request: Request,
   ) {
     const userProfile = request['user'];
-
-    // check if the user is the owner
-    if (!(await this.serverService.isOwner(userProfile, name))) {
-      throw new UnauthorizedException();
-    }
-
-    return this.serverService.update(name, server);
+    return this.serverService.update(name, server, userProfile);
   }
 
   @Delete(':id')
@@ -84,19 +70,10 @@ export class ServerController {
   async getBanned(
     @Req() request: Request,
     @Param('name') serverName: string,
-    @Param('user') nickname: string,
+    @Param('user') username: string,
   ) {
-    const userProfile = request['user'];
-    const user = await this.userService.findOneByUsername(nickname);
-    if (
-      (!(await this.serverService.isOwner(userProfile, serverName)) ||
-        !(await this.serverService.isSuperUser(userProfile, serverName))) &&
-      user.id !== userProfile.id
-    ) {
-      throw new UnauthorizedException();
-    }
-
-    return this.serverService.isBanned(user, serverName);
+    const user = request['user'];
+    return this.serverService.isBanned(user, serverName, username);
   }
 
   @Get(':id/channels')

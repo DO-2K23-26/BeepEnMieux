@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Server, User, Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UsersService } from 'src/users/users.service';
@@ -47,8 +47,13 @@ export class ServerService {
     return await this.prisma.server.findFirst({ where: { nom: name } });
   }
 
-  async findServerUsersFormat(name: string) {
+  async findServerUsersFormat(name: string, userProfile: User) {
     const server = await this.findByName(name);
+
+    if (!(await this.isInServer(userProfile, name))) {
+      throw new UnauthorizedException();
+    }
+
     const users_draft = await this.prisma.server
       .findUnique({ where: { nom: name } })
       .users();
@@ -107,7 +112,16 @@ export class ServerService {
     return { owner, admins, users, banned: usersBanned };
   }
 
-  async isBanned(user: User, serverName: string) {
+  async isBanned(user: User, serverName: string, username: string) {
+    const userProfile = await this.userService.findOneByUsername(username);
+    if (
+      (!(await this.isOwner(userProfile, serverName)) ||
+        !(await this.isSuperUser(userProfile, serverName))) &&
+      user.id !== userProfile.id
+    ) {
+      throw new UnauthorizedException();
+    }
+
     const server = await this.findByName(serverName);
     if (!server) {
       throw new HttpException('Group not found', HttpStatus.NOT_FOUND);
@@ -191,15 +205,25 @@ export class ServerService {
   async update(
     name: string,
     server: { id: number; nom: string; ownerId: number },
+    userProfile: User,
   ) {
+    // check if the user is the owner
+    if (!(await this.isOwner(userProfile, name))) {
+      throw new UnauthorizedException();
+    }
+
     this.prisma.server.update({ where: { nom: name }, data: server });
   }
   async isOwner(userProfile: User, name: string): Promise<boolean> {
-    return this.prisma.server
-      .findFirst({ where: { nom: name } })
-      .then((server) => {
-        return server.ownerId === userProfile.id;
-      });
+    if(this.findByName(name) != null){
+      return this.prisma.server
+        .findFirst({ where: { nom: name } })
+        .then((server) => {
+          return server.ownerId === userProfile.id;
+        });
+    } else {
+      throw new HttpException('Server not found', HttpStatus.NOT_FOUND);
+    }
   }
 
   async isInServer(userProfile: User, name: string): Promise<boolean> {
