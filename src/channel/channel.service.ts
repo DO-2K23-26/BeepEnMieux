@@ -126,4 +126,30 @@ export class ChannelService {
       type: 'TEXT',
     };
   }
+  async deleteChannel(id: number, userProfile: User): Promise<Channel> {
+    // Check if the channel exists
+    const channel = await this.findById(id);
+    if (!channel) {
+      throw new NotFoundException('Channel not found');
+    }
+
+    // Check if the user admin
+    const server = await this.findServerByChannelId(parseInt(String(id)));
+
+    if (!server) {
+      throw new NotFoundException('Server not found');
+    }
+
+    if (
+      !(await this.serverService.isOwner(userProfile, server.nom)) &&
+      !(await this.serverService.isSuperUser(userProfile, server.nom))
+    ) {
+      throw new UnauthorizedException('User not an admin');
+    }
+
+    // Delete the channel
+    return this.prisma.channel.delete({
+      where: { id: parseInt(String(id)) },
+    });
+  }
 }

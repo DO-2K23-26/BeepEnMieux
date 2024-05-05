@@ -1,11 +1,19 @@
-import { Body, Controller, Post, Req, Get, Patch, Param } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  Get,
+  Delete,
+  Param,
+  Patch,
+} from '@nestjs/common';
 import { ChannelService } from './channel.service';
 import {
   CreateChannelDto,
   CreateChannelResponse,
 } from './dto/createChannelDto';
-import { Channel, Message } from '@prisma/client';
-import internal from 'stream';
+import { Channel, Message, User } from '@prisma/client';
 
 @Controller('channel')
 export class ChannelController {
@@ -34,6 +42,16 @@ export class ChannelController {
     @Body() newChannel: CreateChannelDto,
     @Req() request: Request,
   ): Promise<CreateChannelResponse> {
-    return this.channelService.createChannel(newChannel, request['user']);
+    const userProfile: User = request['user'];
+    return this.channelService.createChannel(newChannel, userProfile);
+  }
+
+  @Delete(':id')
+  async deleteChannel(
+    @Param('id') id: number,
+    @Req() request: Request,
+  ): Promise<Channel> {
+    const userProfile: User = request['user'];
+    return this.channelService.deleteChannel(id, userProfile);
   }
 }

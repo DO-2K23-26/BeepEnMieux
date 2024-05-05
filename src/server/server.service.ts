@@ -234,14 +234,17 @@ export class ServerService {
     });
   }
   async isOwner(userProfile: User, name: string): Promise<boolean> {
-    if (this.findByName(name) != null) {
-      return this.prisma.server
-        .findFirst({ where: { nom: name } })
-        .then((server) => {
-          return server.ownerId === userProfile.id;
-        });
+    // check if the server exists
+    const server = await this.findByName(name);
+
+    if (!server) {
+      throw new NotFoundException('Server not found');
+    }
+
+    if (server.ownerId === userProfile.id) {
+      return true;
     } else {
-      throw new HttpException('Server not found', HttpStatus.NOT_FOUND);
+      return false;
     }
   }
 
