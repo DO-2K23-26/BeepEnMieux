@@ -5,11 +5,18 @@ import {
 } from '@nestjs/common';
 import { Channel, Server, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateChannelDto } from './dto/createChannelDto';
+import { ServerService } from 'src/server/server.service';
+import {
+  CreateChannelDto,
+  CreateChannelResponse,
+} from './dto/createChannelDto';
 
 @Injectable()
 export class ChannelService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly serverService: ServerService,
+  ) {}
   async isTimeOut(author: User, channelId: number) {
     const channel = await this.findById(channelId);
     return this.prisma.timedOut.findFirst({
@@ -59,7 +66,10 @@ export class ChannelService {
     return this.prisma.channel.findUnique({ where: { id } }).server();
   }
 
-  async createChannel(newChannel: CreateChannelDto): Promise<Channel> {
+  async createChannel(
+    newChannel: CreateChannelDto,
+    user: User,
+  ): Promise<CreateChannelResponse> {
     // Check if the server exists
     const server = await this.prisma.server.findUnique({
       where: { id: newChannel.serverId },
@@ -67,6 +77,13 @@ export class ChannelService {
 
     if (!server) {
       throw new NotFoundException('Server not found');
+    }
+
+    // Check if the user is in the server or owns the server
+    const userInServer = await this.serverService.isInServer(user, server.nom);
+
+    if (!userInServer && server.ownerId !== user.id) {
+      throw new NotFoundException('User not in the server');
     }
 
     // Check if the channel already exists in the server
@@ -79,11 +96,18 @@ export class ChannelService {
     }
 
     // Create the channel
-    return await this.prisma.channel.create({
+    const channel = await this.prisma.channel.create({
       data: {
         nom: newChannel.nom,
         serverId: newChannel.serverId,
       },
     });
+
+    return {
+      id: channel.id,
+      name: channel.nom,
+      server_id: channel.serverId,
+      type: 'TEXT',
+    };
   }
 }

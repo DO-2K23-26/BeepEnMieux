@@ -1,6 +1,9 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Req } from '@nestjs/common';
 import { ChannelService } from './channel.service';
-import { CreateChannelDto } from './dto/createChannelDto';
+import {
+  CreateChannelDto,
+  CreateChannelResponse,
+} from './dto/createChannelDto';
 
 @Controller('channel')
 export class ChannelController {
@@ -24,7 +27,10 @@ export class ChannelController {
   }*/
 
   @Post('')
-  async createChannel(@Body() newChannel: CreateChannelDto) {
-    return this.channelService.createChannel(newChannel);
+  async createChannel(
+    @Body() newChannel: CreateChannelDto,
+    @Req() request: Request,
+  ): Promise<CreateChannelResponse> {
+    return this.channelService.createChannel(newChannel, request['user']);
   }
 }

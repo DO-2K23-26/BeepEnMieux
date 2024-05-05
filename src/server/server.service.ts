@@ -247,6 +247,16 @@ export class ServerService {
 
     return this.prisma.server
       .findUnique({ where: { id: Number(serverId) } })
-      .channels();
+      .channels()
+      .then((channels) => {
+        return channels.map((channel) => {
+          return {
+            id: channel.id,
+            name: channel.nom,
+            server_id: channel.serverId,
+            type: 'TEXT',
+          };
+        });
+      });
   }
 }
