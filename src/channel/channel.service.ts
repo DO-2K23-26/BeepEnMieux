@@ -32,7 +32,7 @@ export class ChannelService {
       where: { id: parseInt(String(channelId)) },
     });
   }
- 
+
   findMessagesByChannelId(id: any): Promise<Message[]> {
     return this.prisma.channel.findUnique({ where: { id } }).messages();
   }
@@ -83,8 +83,11 @@ export class ChannelService {
     }
 
     // Check if user is an admin
-    if(( !await this.serverService.isOwner(user, server.nom) && !await this.serverService.isSuperUser(user, server.nom))){
-      throw new UnauthorizedException('User not an admin');      
+    if (
+      !(await this.serverService.isOwner(user, server.nom)) &&
+      !(await this.serverService.isSuperUser(user, server.nom))
+    ) {
+      throw new UnauthorizedException('User not an admin');
     }
 
     // Create the channel
