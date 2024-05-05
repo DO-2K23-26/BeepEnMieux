@@ -21,7 +21,10 @@ export class ChannelService {
     private readonly serverService: ServerService,
   ) {}
 
-  async updateChannel(id: number, newChannel: CreateChannelDto): Promise<Channel> {
+  async updateChannel(
+    id: number,
+    newChannel: CreateChannelDto,
+  ): Promise<Channel> {
     return this.prisma.channel.update({
       where: {
         id,
