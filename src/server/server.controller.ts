@@ -69,10 +69,9 @@ export class ServerController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: number) {
-    //TODO IMPORTANT IL FAUT PROTEGER CETTE ROUTE
-
-    return this.serverService.remove(id);
+  remove(@Req() request: Request, @Param('id') id: number) {
+    const userProfile = request['user'];
+    return this.serverService.remove(id, userProfile);
   }
 
   @Get(':name/owner')
@@ -90,8 +89,8 @@ export class ServerController {
     const userProfile = request['user'];
     const user = await this.userService.findOneByUsername(nickname);
     if (
-      //TODO IL FAUT RAJOUTER CHECK DE PERMISSION PAR ROLE
-      !(await this.serverService.isOwner(userProfile, serverName)) &&
+      (!(await this.serverService.isOwner(userProfile, serverName)) ||
+        !(await this.serverService.isSuperUser(userProfile, serverName))) &&
       user.id !== userProfile.id
     ) {
       throw new UnauthorizedException();

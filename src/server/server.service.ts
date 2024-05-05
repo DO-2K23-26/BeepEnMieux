@@ -181,7 +181,11 @@ export class ServerService {
     }
     return false;
   }
-  async remove(id: number) {
+  async remove(id: number, userProfile: User) {
+    const serv = await this.prisma.server.findUnique({ where: { id } });
+    if (!(await this.isOwner(userProfile, serv.nom))) {
+      throw new HttpException('User not owner', HttpStatus.UNAUTHORIZED);
+    }
     this.prisma.server.delete({ where: { id } });
   }
   async update(
@@ -197,6 +201,7 @@ export class ServerService {
         return server.ownerId === userProfile.id;
       });
   }
+
   async isInServer(userProfile: User, name: string): Promise<boolean> {
     return this.prisma.server
       .findFirst({ where: { nom: name } })
@@ -258,5 +263,36 @@ export class ServerService {
           };
         });
       });
+  }
+
+  async isSuperUser(user: User, serverName: string) {
+    const server = await this.findByName(serverName);
+    if (!server) {
+      throw new HttpException('Server not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (!(await this.isInServer(user, serverName))) {
+      throw new HttpException('User not in server', HttpStatus.UNAUTHORIZED);
+    }
+
+    const userRoles = await this.prisma.user
+      .findUnique({
+        where: { id: user.id },
+      })
+      .roles();
+
+    for (const role of userRoles) {
+      if (
+        (
+          await this.prisma.role.findUnique({
+            where: { id: role.id },
+          })
+        ).isAdmin
+      ) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
