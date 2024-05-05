@@ -20,6 +20,18 @@ export class ChannelService {
     private readonly prisma: PrismaService,
     private readonly serverService: ServerService,
   ) {}
+
+  async updateChannel(id: number, newChannel: CreateChannelDto): Promise<Channel> {
+    return this.prisma.channel.update({
+      where: {
+        id,
+      },
+      data: {
+        nom: newChannel.nom,
+      },
+    });
+  }
+
   async isTimeOut(author: User, channelId: number) {
     const channel = await this.findById(channelId);
     return this.prisma.timedOut.findFirst({
