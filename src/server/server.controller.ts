@@ -11,6 +11,7 @@ import {
 import { Server, User } from '@prisma/client';
 import { UsersService } from 'src/users/users.service';
 import { ServerService } from './server.service';
+import { UpdateServerDto } from './dto/updateServer.dto';
 
 @Controller('server')
 export class ServerController {
@@ -43,11 +44,11 @@ export class ServerController {
   @Patch(':name')
   async update(
     @Param('name') name: string,
-    @Body('server') server: Server,
+    @Body() newServer: UpdateServerDto,
     @Req() request: Request,
-  ) {
+  ): Promise<Server> {
     const userProfile: User = request['user'];
-    return this.serverService.update(name, server, userProfile);
+    return this.serverService.update(name, newServer, userProfile);
   }
 
   @Delete(':id')

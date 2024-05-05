@@ -2,11 +2,13 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Server, User, Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UsersService } from 'src/users/users.service';
+import { UpdateServerDto } from './dto/updateServer.dto';
 
 @Injectable()
 export class ServerService {
@@ -188,6 +190,7 @@ export class ServerService {
     });
     return true;
   }
+
   async isRole(username: string, role: Role): Promise<boolean> {
     const user = await this.userService.findOneByUsername(username);
     const roles = await this.prisma.user
@@ -200,24 +203,35 @@ export class ServerService {
     }
     return false;
   }
-  async remove(id: number, userProfile: User) {
-    const serv = await this.prisma.server.findUnique({ where: { id } });
-    if (!(await this.isOwner(userProfile, serv.nom))) {
-      throw new HttpException('User not owner', HttpStatus.UNAUTHORIZED);
+
+  async remove(id: number, userProfile: User): Promise<Server> {
+    const serv = await this.prisma.server.findUnique({
+      where: { id: parseInt(String(id)) },
+    });
+    if (!serv) {
+      throw new NotFoundException('Server not found');
     }
-    this.prisma.server.delete({ where: { id } });
+    if (!(await this.isOwner(userProfile, serv.nom))) {
+      throw new UnauthorizedException('User not owner');
+    }
+    return this.prisma.server.delete({ where: { id: parseInt(String(id)) } });
   }
-  async update(
-    name: string,
-    server: { id: number; nom: string; ownerId: number },
-    userProfile: User,
-  ) {
+
+  async update(name: string, newServer: UpdateServerDto, userProfile: User) {
+    // check if the server exists
+    if (this.findByName(name) == null) {
+      throw new NotFoundException('Server not found');
+    }
+
     // check if the user is the owner
     if (!(await this.isOwner(userProfile, name))) {
       throw new UnauthorizedException();
     }
 
-    this.prisma.server.update({ where: { nom: name }, data: server });
+    return await this.prisma.server.update({
+      where: { nom: name },
+      data: newServer,
+    });
   }
   async isOwner(userProfile: User, name: string): Promise<boolean> {
     if (this.findByName(name) != null) {
