@@ -209,15 +209,23 @@ export class ServerService {
 
   async findServersByUserId(
     id: any,
-  ): Promise<{ id: number; name: string; owner_id: number }[]> {
-    return (
-      await this.prisma.server.findMany({ where: { users: { some: { id } } } })
-    ).map((server) => {
-      return {
-        id: server.id,
-        name: server.nom,
-        owner_id: server.ownerId,
-      };
-    });
+  ): Promise<{ id: number; name: string; owner_id: string }[]> {
+    return Promise.all(
+      (
+        await this.prisma.server.findMany({
+          where: { users: { some: { id } } },
+        })
+      ).map(async (server) => {
+        return {
+          id: server.id,
+          name: server.nom,
+          owner_id: await this.userService
+            .findOneById(server.ownerId)
+            .then((user) => {
+              return user.user.username;
+            }),
+        };
+      }),
+    );
   }
 }
