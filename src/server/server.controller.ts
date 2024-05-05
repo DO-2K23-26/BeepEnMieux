@@ -36,7 +36,7 @@ export class ServerController {
     @Param('name') name: string,
     @Req() request: Request,
   ): Promise<Server | null> {
-    const userProfile = request['user'];
+    const userProfile: User = request['user'];
     return await this.serverService.addOrCreateServer(name, userProfile);
   }
 
@@ -46,19 +46,19 @@ export class ServerController {
     @Body('server') server: Server,
     @Req() request: Request,
   ) {
-    const userProfile = request['user'];
+    const userProfile: User = request['user'];
     return this.serverService.update(name, server, userProfile);
   }
 
   @Delete(':id')
   remove(@Req() request: Request, @Param('id') id: number) {
-    const userProfile = request['user'];
+    const userProfile: User = request['user'];
     return this.serverService.remove(id, userProfile);
   }
 
   @Get(':name/owner')
   async isOwner(@Req() request: Request, @Param('name') serverName: string) {
-    const userProfile = request['user'];
+    const userProfile: User = request['user'];
     return this.serverService.isOwner(userProfile, serverName);
   }
 
@@ -68,12 +68,13 @@ export class ServerController {
     @Param('name') serverName: string,
     @Param('user') username: string,
   ) {
-    const user = request['user'];
-    return this.serverService.isBanned(user, serverName, username);
+    const userProfile: User = request['user'];
+    return this.serverService.isBanned(userProfile, serverName, username);
   }
 
   @Get(':id/channels')
   async getAllChannels(@Param('id') id: string, @Req() request: Request) {
-    return this.serverService.getAllChannels(id, request['user']);
+    const userProfile: User = request['user'];
+    return this.serverService.getAllChannels(id, userProfile);
   }
 }
