@@ -1,5 +1,6 @@
-import { Controller } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { ChannelService } from './channel.service';
+import { CreateChannelDto } from './dto/createChannelDto';
 
 @Controller('channel')
 export class ChannelController {
@@ -21,4 +22,9 @@ export class ChannelController {
   async findMessagesByChannelId(@Req() request: Request): Promise<Message[]> {
     return this.channelService.findMessagesByChannelId(request['channel'].id);
   }*/
+
+  @Post('')
+  async createChannel(@Body() newChannel: CreateChannelDto) {
+    return this.channelService.createChannel(newChannel);
+  }
 }

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Channel, Server, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateChannelDto } from './dto/createChannelDto';
 
 @Injectable()
 export class ChannelService {
@@ -52,5 +53,33 @@ export class ChannelService {
   }*/
   findServerByChannelId(id: any): Promise<Server> {
     return this.prisma.channel.findUnique({ where: { id } }).server();
+  }
+
+  async createChannel(newChannel: CreateChannelDto): Promise<Channel> {
+    // Check if the server exists
+    const server = await this.prisma.server.findUnique({
+      where: { id: newChannel.serverId },
+    });
+
+    if (!server) {
+      throw new Error('Server not found');
+    }
+
+    // Check if the channel already exists in the server
+    const existingChannel = await this.prisma.channel.findFirst({
+      where: { nom: newChannel.nom, serverId: newChannel.serverId },
+    });
+
+    if (existingChannel) {
+      throw new Error('Channel already exists in the server');
+    }
+
+    // Create the channel
+    return await this.prisma.channel.create({
+      data: {
+        nom: newChannel.nom,
+        serverId: newChannel.serverId,
+      },
+    });
   }
 }
