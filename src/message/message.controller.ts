@@ -34,12 +34,15 @@ export class MessageController {
     return this.messageService.create(createMessageDto);
   }
 
-  /* TODO AFTER FIXING MESSAGE FINDONE
+  //TODO AFTER FIXING MESSAGE FINDONE
   @Get(':id')
   async findOne(@Param('id') id: number, @Req() request: Request) {
     // check if user is in server
     const user = request['user'];
     const message = await this.messageService.findOne(id);
+    if (!message) {
+      throw new HttpException('Message not found', 404);
+    }
     const channel = await this.channelService.findOne(message.channelId);
     const server = await this.channelService.findServerByChannelId(channel.id);
 
@@ -52,7 +55,7 @@ export class MessageController {
     }
 
     return message;
-  }*/
+  }
 
   @Patch(':id')
   async update(

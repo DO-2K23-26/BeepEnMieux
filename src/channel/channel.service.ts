@@ -2,8 +2,9 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { Channel, Server, User } from '@prisma/client';
+import { Channel, Message, Server, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ServerService } from 'src/server/server.service';
 import {
@@ -31,42 +32,27 @@ export class ChannelService {
       where: { id: parseInt(String(channelId)) },
     });
   }
-  /*
-  TODO: Implement the following methods
-  findMessagesByChannelId(id: any):
-    | {
-        id: number;
-        contenu: string;
-        authorId: number;
-        channelId: number;
-        timestamp: Date;
-      }[]
-    | PromiseLike<
-        {
-          id: number;
-          contenu: string;
-          authorId: number;
-          channelId: number;
-          timestamp: Date;
-        }[]
-      > {
-    throw new Error('Method not implemented.');
+ 
+  findMessagesByChannelId(id: any): Promise<Message[]> {
+    return this.prisma.channel.findUnique({ where: { id } }).messages();
   }
-  findOne(
-    id: any,
-  ):
-    | { id: number; nom: string; serverId: number }
-    | PromiseLike<{ id: number; nom: string; serverId: number }> {
-    throw new Error('Method not implemented.');
-  }
+
   findChannelsByServerId(id: any): Promise<Channel[]> {
     throw new Error('Method not implemented.');
-  }*/
+  }
+
+  async findOne(id: number): Promise<Channel> {
+    return this.prisma.channel.findUnique({
+      where: {
+        id: Number(id),
+      },
+    });
+  }
+
   findServerByChannelId(id: any): Promise<Server> {
     return this.prisma.channel.findUnique({ where: { id } }).server();
   }
 
-  //TODO: enable only for admin and server owner
   async createChannel(
     newChannel: CreateChannelDto,
     user: User,
@@ -94,6 +80,11 @@ export class ChannelService {
 
     if (existingChannel) {
       throw new ConflictException('Channel already exists in the server');
+    }
+
+    // Check if user is an admin
+    if(( !await this.serverService.isOwner(user, server.nom) && !await this.serverService.isSuperUser(user, server.nom))){
+      throw new UnauthorizedException('User not an admin');      
     }
 
     // Create the channel
