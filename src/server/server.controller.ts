@@ -99,4 +99,9 @@ export class ServerController {
 
     return this.serverService.isBanned(user, serverName);
   }
+
+  @Get(':id/channels')
+  async getAllChannels(@Param('id') id: number, @Req() request: Request) {
+    return this.serverService.getAllChannels(id, request['user']);
+  }
 }

@@ -206,6 +206,16 @@ export class ServerService {
         return users.some((element) => element.id === userProfile.id);
       });
   }
+  // TODO: Remove one of isInServerId and isInServer
+  async isInServerId(userProfile: User, id: number): Promise<boolean> {
+    return this.prisma.server
+      .findFirst({ where: { id: id } })
+      .users()
+      .then((users) => {
+        if (!users) return false;
+        return users.some((element) => element.id === userProfile.id);
+      });
+  }
 
   async findServersByUserId(
     id: any,
@@ -227,5 +237,16 @@ export class ServerService {
         };
       }),
     );
+  }
+
+  async getAllChannels(serverId: number, user: User) {
+    // check if the user is in the group
+    if (!(await this.isInServerId(user, serverId))) {
+      throw new HttpException('User not in group', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.prisma.server
+      .findUnique({ where: { id: serverId } })
+      .channels();
   }
 }
