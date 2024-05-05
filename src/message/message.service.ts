@@ -63,7 +63,7 @@ export class MessageService {
     }
 
     // Check if user is in server
-    if (await this.serverService.isInServer(user, server.nom)) {
+    if (!(await this.serverService.isInServer(user, server.nom))) {
       throw new UnauthorizedException('User is not in server');
     }
 
@@ -79,7 +79,7 @@ export class MessageService {
     }
 
     const message = await this.prisma.message.findMany({
-      where: { channelId },
+      where: { channelId: parseInt(String(channelId)) },
       orderBy: { timestamp: 'asc' },
     });
 
