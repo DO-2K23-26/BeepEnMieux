@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Channel, Server, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateChannelDto } from './dto/createChannelDto';
+import { NotFoundError } from 'rxjs';
 
 @Injectable()
 export class ChannelService {
@@ -62,7 +63,7 @@ export class ChannelService {
     });
 
     if (!server) {
-      throw new Error('Server not found');
+      throw new NotFoundException('Server not found');
     }
 
     // Check if the channel already exists in the server
@@ -71,7 +72,7 @@ export class ChannelService {
     });
 
     if (existingChannel) {
-      throw new Error('Channel already exists in the server');
+      throw new ConflictException('Channel already exists in the server');
     }
 
     // Create the channel
