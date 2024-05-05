@@ -1,4 +1,9 @@
-import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Server, User, Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UsersService } from 'src/users/users.service';
@@ -215,7 +220,7 @@ export class ServerService {
     this.prisma.server.update({ where: { nom: name }, data: server });
   }
   async isOwner(userProfile: User, name: string): Promise<boolean> {
-    if(this.findByName(name) != null){
+    if (this.findByName(name) != null) {
       return this.prisma.server
         .findFirst({ where: { nom: name } })
         .then((server) => {

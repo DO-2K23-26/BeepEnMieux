@@ -37,9 +37,10 @@ export class ChannelService {
     return this.prisma.channel.findUnique({ where: { id } }).messages();
   }
 
-  findChannelsByServerId(id: any): Promise<Channel[]> {
-    throw new Error('Method not implemented.');
-  }
+  // TODO: Implement this method
+  // findChannelsByServerId(id: any): Promise<Channel[]> {
+  //   throw new Error('Method not implemented.');
+  // }
 
   async findOne(id: number): Promise<Channel> {
     return this.prisma.channel.findUnique({

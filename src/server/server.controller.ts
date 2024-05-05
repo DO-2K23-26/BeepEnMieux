@@ -7,11 +7,10 @@ import {
   Patch,
   Post,
   Req,
-  UnauthorizedException,
 } from '@nestjs/common';
-import { ServerService } from './server.service';
-import { UsersService } from 'src/users/users.service';
 import { Server, User } from '@prisma/client';
+import { UsersService } from 'src/users/users.service';
+import { ServerService } from './server.service';
 
 @Controller('server')
 export class ServerController {
@@ -38,10 +37,7 @@ export class ServerController {
     @Req() request: Request,
   ): Promise<Server | null> {
     const userProfile = request['user'];
-    return await this.serverService.addOrCreateServer(
-      name,
-      userProfile,
-    );
+    return await this.serverService.addOrCreateServer(name, userProfile);
   }
 
   @Patch(':name')

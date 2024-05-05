@@ -10,7 +10,7 @@ export class UsersService {
 
   async findOneByUsername(username: string): Promise<User | null> {
     // Check if user already exists
-    if ((await this.prisma.user.findFirst({ where: { username } }))) {
+    if (await this.prisma.user.findFirst({ where: { username } })) {
       return await this.prisma.user.findFirst({ where: { username } });
     } else {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -179,7 +179,10 @@ export class UsersService {
     return updatedUser;
   }
 
-  async remove(id: number, userProfile: User): Promise<Omit<User, 'password'> | null> {
+  async remove(
+    id: number,
+    userProfile: User,
+  ): Promise<Omit<User, 'password'> | null> {
     if (userProfile.id !== Number(id)) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }

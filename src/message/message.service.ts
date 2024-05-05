@@ -66,7 +66,10 @@ export class MessageService {
     if (user.id !== message.authorId) {
       throw new HttpException('Unauthorized', 401);
     }
-    return this.prisma.message.update({ where: { id }, data: updateMessageDto });
+    return this.prisma.message.update({
+      where: { id },
+      data: updateMessageDto,
+    });
   }
 
   async updateContenu(id: number, contenu: string): Promise<Message> {

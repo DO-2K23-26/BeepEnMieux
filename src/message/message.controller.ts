@@ -3,21 +3,18 @@ import {
   Controller,
   Delete,
   Get,
-  HttpException,
   Param,
   Patch,
   Post,
   Req,
 } from '@nestjs/common';
-import { AuthService } from 'src/auth/auth.service';
+import { User } from '@prisma/client';
 import { ChannelService } from 'src/channel/channel.service';
 import { UsersService } from 'src/users/users.service';
-import { ServerService } from 'src/server/server.service';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { MessageEntity } from './dto/reponse.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { MessageService } from './message.service';
-import { User } from '@prisma/client';
-import { MessageEntity } from './dto/reponse.dto';
 
 @Controller('message')
 export class MessageController {
