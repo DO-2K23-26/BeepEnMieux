@@ -16,7 +16,7 @@ export class UsersService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
   }
-  
+
   async findByEmail(author: string) {
     return await this.prisma.user.findFirst({ where: { email: author } });
   }
@@ -179,7 +179,10 @@ export class UsersService {
     return updatedUser;
   }
 
-  async remove(id: number): Promise<Omit<User, 'password'> | null> {
+  async remove(id: number, userProfile: User): Promise<Omit<User, 'password'> | null> {
+    if (userProfile.id !== Number(id)) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new HttpException(

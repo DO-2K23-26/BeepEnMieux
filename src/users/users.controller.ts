@@ -2,8 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  HttpException,
-  HttpStatus,
   Param,
   Patch,
   Post,
@@ -17,7 +15,6 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    // private readonly authService: AuthService,
   ) {}
 
   @Public()
@@ -29,14 +26,13 @@ export class UsersController {
     @Body('lastname') lastname: string,
     @Body('firstname') firstname: string,
   ): Promise<Omit<User, 'password'>> {
-    const user = await this.usersService.create(
+    return await this.usersService.create(
       email,
       username,
       password,
       lastname,
       firstname,
     );
-    return user;
   }
 
   @Patch()
@@ -47,10 +43,7 @@ export class UsersController {
 
   @Delete(':id')
   remove(@Param('id') id: string, @Req() req: Request) {
-    const user = req['user'];
-    if (user.id !== Number(id)) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
-    return this.usersService.remove(Number(id));
+    const user: User = req['user'];
+    return this.usersService.remove(Number(id), user);
   }
 }
