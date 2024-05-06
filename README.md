@@ -12,15 +12,16 @@ DATABASE_URL="mongodb://user:password@ip:port/mybdname"
 ```
 - Saugarder le fichier et le renomer en **.env** (il suffit simplement de retirer le .template). 
 
-### Instancier la BD
-Tout d'abord, générez le modèle de notre base de données. Le modèle se trouve dans le fichier **./prisma/schema.prisma**, et grâce à Prisma, nous pouvons gérer la base de données automatiquement avec la commande suivante :
-```bash
-npx prisma generate
-```
 ## Lancer le docker compose
 Ensuite, lancez Docker Compose :
 ```bash
 docker compose up -d postgres
+```
+
+### Instancier la BD
+Tout d'abord, générez le modèle de notre base de données. Le modèle se trouve dans le fichier **./prisma/schema.prisma**, et grâce à Prisma, nous pouvons gérer la base de données automatiquement avec la commande suivante :
+```bash
+npx prisma generate
 ```
 
 ## Lancer l'application
